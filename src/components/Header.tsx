@@ -130,8 +130,8 @@ export function Header({
               <Input
                 value={playerName}
                 onChange={(event) => onPlayerNameChange(event.target.value)}
-                placeholder="Your hunter name"
-                aria-label="Hunter name"
+                placeholder="Your character name"
+                aria-label="Character name"
                 className="w-full sm:w-48"
               />
               <Button onClick={() => setShareOpen(true)}>
