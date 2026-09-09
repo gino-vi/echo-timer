@@ -12,6 +12,7 @@ type HuntStripProps = {
   now: number
   serverId: ServerId
   onSelect: (cell: SelectedCell) => void
+  onQuickKill: (cell: SelectedCell) => void
 }
 
 const PRIORITY_LABEL: Record<HuntPriority, string> = {
@@ -20,7 +21,7 @@ const PRIORITY_LABEL: Record<HuntPriority, string> = {
   soon: 'Soon',
 }
 
-export function HuntStrip({ board, now, serverId, onSelect }: HuntStripProps) {
+export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntStripProps) {
   const actionable = listHuntNow(board, now, serverId)
   const currentServer = SERVERS.find((server) => server.id === serverId)?.full ?? serverId
 
@@ -50,6 +51,7 @@ export function HuntStrip({ board, now, serverId, onSelect }: HuntStripProps) {
                 key={row.key}
                 variant="outline"
                 className="h-auto min-w-44 flex-col items-start gap-1 px-3 py-2"
+                title="Click for tombstone time. Right-click to log killed now."
                 onClick={() =>
                   onSelect({
                     bossId: row.bossId,
@@ -57,6 +59,14 @@ export function HuntStrip({ board, now, serverId, onSelect }: HuntStripProps) {
                     channel: row.channel,
                   })
                 }
+                onContextMenu={(event) => {
+                  event.preventDefault()
+                  onQuickKill({
+                    bossId: row.bossId,
+                    serverId: row.serverId,
+                    channel: row.channel,
+                  })
+                }}
               >
                 <span className="flex w-full items-center justify-between gap-2">
                   <span className="text-xs font-medium">{boss?.short}</span>

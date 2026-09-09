@@ -12,9 +12,10 @@ type BossGridProps = {
   now: number
   filter: HuntFilter
   onSelect: (cell: SelectedCell) => void
+  onQuickKill: (cell: SelectedCell) => void
 }
 
-export function BossGrid({ board, serverId, now, filter, onSelect }: BossGridProps) {
+export function BossGrid({ board, serverId, now, filter, onSelect, onQuickKill }: BossGridProps) {
   const rows = BOSSES.map((boss) => {
     const cells = CHANNELS.map((channel) => {
       const key = timerKey(boss.id, serverId, channel)
@@ -67,6 +68,9 @@ export function BossGrid({ board, serverId, now, filter, onSelect }: BossGridPro
                   onClick={() =>
                     onSelect({ bossId: boss.id, serverId, channel: cell.channel })
                   }
+                  onQuickKill={() =>
+                    onQuickKill({ bossId: boss.id, serverId, channel: cell.channel })
+                  }
                 />
               ))}
             </div>
@@ -88,6 +92,9 @@ export function BossGrid({ board, serverId, now, filter, onSelect }: BossGridPro
                   compact
                   onClick={() =>
                     onSelect({ bossId: boss.id, serverId, channel: cell.channel })
+                  }
+                  onQuickKill={() =>
+                    onQuickKill({ bossId: boss.id, serverId, channel: cell.channel })
                   }
                 />
               ))}

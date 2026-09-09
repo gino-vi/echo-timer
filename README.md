@@ -1,4 +1,4 @@
-# SpiritVale Boss Board
+# Echo Master Boss Board
 
 A lightweight shared dashboard for tracking **class master** boss respawns in SpiritVale. It is built for a small hunting group (about six people), not a game-wide platform.
 
@@ -64,7 +64,7 @@ npm run preview
 ## Use it with your party
 
 1. Open the site and set **Your hunter name**.
-2. Click a boss channel and enter the tombstone time. Use **Killed just now**, **Minutes ago**, the **clock time on the tombstone**, or an exact local datetime.
+2. Click a boss channel and enter the tombstone time, or **right-click** the cell to log it as killed now. In the dialog, use **Killed just now**, **Minutes ago**, or the **clock time on the tombstone**.
 3. Click **Share board** and copy the party link into Discord.
 4. Everyone else opens **that same link** and leaves it open. New kills are pushed to the party immediately. Player 2 logging Asia and Player 3 logging NA will both appear on every open board.
 

@@ -111,7 +111,7 @@ export function Header({
               SpiritVale
             </p>
             <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
-              Master Boss Board
+              Echo Master Boss Board
             </h1>
             <p className="max-w-xl text-sm text-muted-foreground">
               Shared timers for the seven class masters across every server and channel.

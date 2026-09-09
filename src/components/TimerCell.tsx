@@ -9,6 +9,7 @@ type TimerCellProps = {
   record: TimerRecord | undefined
   now: number
   onClick: () => void
+  onQuickKill: () => void
   compact?: boolean
 }
 
@@ -23,7 +24,7 @@ const STATUS_STYLES = {
   stale: 'border-zinc-500/40 bg-zinc-800/70 text-zinc-400 hover:border-zinc-400/50',
 }
 
-export function TimerCell({ channel, record, now, onClick, compact }: TimerCellProps) {
+export function TimerCell({ channel, record, now, onClick, onQuickKill, compact }: TimerCellProps) {
   const snap = spawnSnapshot(killedAtMs(record), now)
   const headline =
     snap.status === 'unknown'
@@ -39,7 +40,12 @@ export function TimerCell({ channel, record, now, onClick, compact }: TimerCellP
   return (
     <button
       type="button"
+      title="Click for tombstone time. Right-click to log killed now."
       onClick={onClick}
+      onContextMenu={(event) => {
+        event.preventDefault()
+        onQuickKill()
+      }}
       className={cn(
         'flex w-full flex-col items-start rounded-xl border px-3 py-2.5 text-left transition-colors',
         STATUS_STYLES[snap.status],
@@ -57,7 +63,7 @@ export function TimerCell({ channel, record, now, onClick, compact }: TimerCellP
           {record?.reportedBy ? ` · ${record.reportedBy}` : ''}
         </span>
       ) : (
-        <span className="text-xs opacity-70">Tap to enter a tombstone time</span>
+        <span className="text-xs opacity-70">Click for a time, or right-click to log now</span>
       )}
     </button>
   )
