@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { BOSSES, SERVERS, type ServerId } from '@/lib/game'
 import type { BoardDoc } from '@/lib/board'
-import { formatDuration } from '@/lib/timers'
+import { formatDuration, formatElapsed } from '@/lib/timers'
 import { formatTime } from '@/lib/format'
 import { listHuntNow, type HuntPriority } from '@/lib/hunt'
 import type { SelectedCell } from '@/lib/view'
@@ -82,7 +82,7 @@ export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntS
                   {row.priority === 'overdue'
                     ? `Overdue ${formatDuration(row.snap.msOverdue)}`
                     : row.priority === 'window'
-                      ? `${formatDuration(row.snap.msLeftInWindow)} left`
+                      ? `Open ${formatElapsed(row.snap.msWindowOpen)}`
                       : `Window in ${formatDuration(row.snap.msUntilWindow)}`}
                 </span>
               </Button>

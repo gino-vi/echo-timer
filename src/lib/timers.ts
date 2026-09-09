@@ -12,6 +12,8 @@ export type SpawnSnapshot = {
   msUntilWindow: number
   /** Milliseconds remaining in the spawn window. 0 if not in the window. */
   msLeftInWindow: number
+  /** Milliseconds since the spawn window opened. 0 if not in the window. */
+  msWindowOpen: number
   /** Milliseconds since the window closed. 0 if not overdue or stale. */
   msOverdue: number
 }
@@ -25,6 +27,7 @@ export function spawnSnapshot(killedAt: number | null, now: number): SpawnSnapsh
       latestSpawnAt: null,
       msUntilWindow: 0,
       msLeftInWindow: 0,
+      msWindowOpen: 0,
       msOverdue: 0,
     }
   }
@@ -39,6 +42,7 @@ export function spawnSnapshot(killedAt: number | null, now: number): SpawnSnapsh
       ...emptyTimes,
       msUntilWindow: earliestSpawnAt - now,
       msLeftInWindow: 0,
+      msWindowOpen: 0,
       msOverdue: 0,
     }
   }
@@ -49,6 +53,7 @@ export function spawnSnapshot(killedAt: number | null, now: number): SpawnSnapsh
       ...emptyTimes,
       msUntilWindow: 0,
       msLeftInWindow: latestSpawnAt - now,
+      msWindowOpen: now - earliestSpawnAt,
       msOverdue: 0,
     }
   }
@@ -60,6 +65,7 @@ export function spawnSnapshot(killedAt: number | null, now: number): SpawnSnapsh
       ...emptyTimes,
       msUntilWindow: 0,
       msLeftInWindow: 0,
+      msWindowOpen: 0,
       msOverdue,
     }
   }
@@ -69,8 +75,14 @@ export function spawnSnapshot(killedAt: number | null, now: number): SpawnSnapsh
     ...emptyTimes,
     msUntilWindow: 0,
     msLeftInWindow: 0,
+    msWindowOpen: 0,
     msOverdue,
   }
+}
+
+/** Count-up clock. A just-opened window starts at 0:01 instead of 0:00. */
+export function formatElapsed(ms: number): string {
+  return formatDuration(Math.max(1000, ms))
 }
 
 export function formatDuration(ms: number): string {
