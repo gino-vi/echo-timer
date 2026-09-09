@@ -79,7 +79,6 @@ Shared board state is **not** stored in the GitHub repo. The Pages site is only 
 
 ## Assumptions
 
-- In-game name **Necromaster Master** is tracked as **Necromancer Master**.
 - Tombstone times are entered in the player's local clock. If a grave shows a different timezone, convert it before saving.
 - Channels are 1–3 on each listed server.
 
