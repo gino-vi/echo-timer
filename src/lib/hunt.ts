@@ -1,4 +1,4 @@
-import { parseTimerKey, type BossId, type ChannelId, type ServerId } from '@/lib/game'
+import { parseTimerKey, STALE_OVERDUE_MS, type BossId, type ChannelId, type ServerId } from '@/lib/game'
 import { killedAtMs, type BoardDoc, type TimerRecord } from '@/lib/board'
 import { spawnSnapshot, type SpawnSnapshot } from '@/lib/timers'
 
@@ -20,7 +20,8 @@ export type HuntRow = {
 
 function huntPriority(snap: SpawnSnapshot): HuntPriority | null {
   if (snap.status === 'window') return 'window'
-  if (snap.status === 'overdue') return 'overdue'
+  // Up? stays until the report has been overdue for 30 minutes, then it is stale.
+  if (snap.status === 'overdue' && snap.msOverdue < STALE_OVERDUE_MS) return 'overdue'
   if (snap.status === 'dead' && snap.msUntilWindow > 0 && snap.msUntilWindow <= HUNT_SOON_MS) {
     return 'soon'
   }

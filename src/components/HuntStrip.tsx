@@ -1,11 +1,12 @@
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { BOSSES, SERVERS, type ServerId } from '@/lib/game'
 import type { BoardDoc } from '@/lib/board'
 import { formatDuration, formatElapsed } from '@/lib/timers'
 import { formatTime } from '@/lib/format'
 import { listHuntNow, type HuntPriority } from '@/lib/hunt'
 import type { SelectedCell } from '@/lib/view'
+import { STATUS_STYLES } from '@/lib/statusStyles'
+import { cn } from '@/lib/utils'
 
 type HuntStripProps = {
   board: BoardDoc
@@ -31,8 +32,8 @@ export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntS
         <div>
           <h2 className="font-heading text-sm font-medium">Hunt now</h2>
           <p className="text-xs text-muted-foreground">
-            {currentServer} only: should-be-up, open windows, and windows opening in the next 5
-            minutes. Stale reports stay on the grid, not here.
+            {currentServer} only: should-be-up for 30 minutes, open windows, and windows opening in
+            the next 5 minutes. Stale reports stay on the grid, not here.
           </p>
         </div>
         <Badge variant="outline">{actionable.length} ready</Badge>
@@ -47,11 +48,13 @@ export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntS
           {actionable.map((row) => {
             const boss = BOSSES.find((item) => item.id === row.bossId)
             return (
-              <Button
+              <button
                 key={row.key}
-                variant="outline"
-                className="h-auto min-w-44 flex-col items-start gap-1 px-3 py-2"
-                title="Click for tombstone time. Right-click to log killed now."
+                type="button"
+                className={cn(
+                  'flex h-auto min-w-44 flex-col items-start gap-1 rounded-xl border px-3 py-2 text-left transition-colors',
+                  STATUS_STYLES[row.snap.status],
+                )}
                 onClick={() =>
                   onSelect({
                     bossId: row.bossId,
@@ -70,11 +73,14 @@ export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntS
               >
                 <span className="flex w-full items-center justify-between gap-2">
                   <span className="text-xs font-medium">{boss?.short}</span>
-                  <Badge variant={row.priority === 'overdue' ? 'default' : 'secondary'}>
+                  <Badge
+                    variant="outline"
+                    className="border-current/30 bg-black/20 text-inherit"
+                  >
                     {PRIORITY_LABEL[row.priority]}
                   </Badge>
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs opacity-80">
                   CH{row.channel}
                   {row.snap.killedAt ? ` · died ${formatTime(row.snap.killedAt)}` : ''}
                 </span>
@@ -85,7 +91,7 @@ export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntS
                       ? `Open for ${formatElapsed(row.snap.msWindowOpen)}`
                       : `Window in ${formatDuration(row.snap.msUntilWindow)}`}
                 </span>
-              </Button>
+              </button>
             )
           })}
         </div>
