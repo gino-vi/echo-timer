@@ -44,6 +44,8 @@ export default function App() {
         partyUrl={boardState.partyUrl}
         onCreateBoard={boardState.createSharedBoard}
         onImport={handleImport}
+        onClearAll={boardState.clearAllTimers}
+        hasReports={boardState.hasReports}
         exportPayload={JSON.stringify(boardState.board, null, 2)}
       />
 

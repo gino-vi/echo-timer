@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   applyLivePayload,
+  clearAllTimers,
   decodeRoom,
   encodeRoom,
+  hasKillReports,
   mergeBoards,
   randomNamespace,
   setTimer,
@@ -231,6 +233,17 @@ export function useBoard() {
     [broadcast, enqueuePush, playerName],
   )
 
+  const clearAllTimersOnBoard = useCallback(
+    (reporter = playerName) => {
+      const next = clearAllTimers(boardRef.current, reporter)
+      boardRef.current = next
+      setBoard(next)
+      broadcast({ type: 'snapshot', board: next })
+      enqueuePush(next)
+    },
+    [broadcast, enqueuePush, playerName],
+  )
+
   const createSharedBoard = useCallback(async () => {
     setSyncState('connecting')
     setSyncError(null)
@@ -285,8 +298,10 @@ export function useBoard() {
     updateServerId,
     reportKill,
     clearTimer,
+    clearAllTimers: clearAllTimersOnBoard,
     createSharedBoard,
     importBoard,
     refreshRemote,
+    hasReports: hasKillReports(board),
   }
 }

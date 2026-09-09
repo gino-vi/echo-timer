@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,7 @@ import type { HuntFilter } from '@/lib/view'
 import { SERVERS, type ServerId } from '@/lib/game'
 import { formatClock, timezoneLabel } from '@/lib/format'
 import type { SyncState } from '@/hooks/useBoard'
-import { Link2, Loader2, Share2, Upload } from 'lucide-react'
+import { Link2, Loader2, Share2, Trash2, Upload } from 'lucide-react'
 
 const FILTERS: { id: HuntFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -40,6 +40,8 @@ type HeaderProps = {
   partyUrl: string | null
   onCreateBoard: () => Promise<string>
   onImport: (text: string) => void
+  onClearAll: () => void
+  hasReports: boolean
   exportPayload: string
 }
 
@@ -58,11 +60,20 @@ export function Header({
   partyUrl,
   onCreateBoard,
   onImport,
+  onClearAll,
+  hasReports,
   exportPayload,
 }: HeaderProps) {
   const [shareOpen, setShareOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [importText, setImportText] = useState('')
+  const [confirmClear, setConfirmClear] = useState(false)
+
+  useEffect(() => {
+    if (!confirmClear) return
+    const id = window.setTimeout(() => setConfirmClear(false), 4000)
+    return () => window.clearTimeout(id)
+  }, [confirmClear])
 
   async function copyPartyLink() {
     try {
@@ -125,6 +136,22 @@ export function Header({
               <Button onClick={() => setShareOpen(true)}>
                 <Share2 data-icon="inline-start" />
                 Share board
+              </Button>
+              <Button
+                variant={confirmClear ? 'destructive' : 'outline'}
+                disabled={!hasReports && !confirmClear}
+                onClick={() => {
+                  if (!confirmClear) {
+                    setConfirmClear(true)
+                    return
+                  }
+                  onClearAll()
+                  setConfirmClear(false)
+                  toast.success('All reported timers cleared')
+                }}
+              >
+                <Trash2 data-icon="inline-start" />
+                {confirmClear ? 'Click again to confirm' : 'Clear all timers'}
               </Button>
             </div>
           </div>
