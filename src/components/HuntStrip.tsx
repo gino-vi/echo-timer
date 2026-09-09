@@ -82,7 +82,7 @@ export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntS
                   {row.priority === 'overdue'
                     ? `Overdue ${formatDuration(row.snap.msOverdue)}`
                     : row.priority === 'window'
-                      ? `Open ${formatElapsed(row.snap.msWindowOpen)}`
+                      ? `Open for ${formatElapsed(row.snap.msWindowOpen)}`
                       : `Window in ${formatDuration(row.snap.msUntilWindow)}`}
                 </span>
               </Button>
