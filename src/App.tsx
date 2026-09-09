@@ -70,6 +70,7 @@ export default function App() {
               <p>Rose = dead</p>
               <p>Gold = spawn window</p>
               <p>Green = should be up</p>
+              <p>Grey = stale</p>
             </div>
           </div>
           <BossGrid

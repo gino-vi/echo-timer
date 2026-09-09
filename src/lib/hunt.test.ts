@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { EARLIEST_SPAWN_MS, LATEST_SPAWN_MS } from '@/lib/game'
-import { HUNT_SOON_MS, HUNT_STALE_OVERDUE_MS, listHuntNow } from '@/lib/hunt'
+import { EARLIEST_SPAWN_MS, LATEST_SPAWN_MS, STALE_OVERDUE_MS } from '@/lib/game'
+import { HUNT_SOON_MS, listHuntNow } from '@/lib/hunt'
 import type { BoardDoc } from '@/lib/board'
 
 const KILL = Date.parse('2026-09-09T12:00:00.000Z')
@@ -33,7 +33,7 @@ describe('listHuntNow', () => {
 
   it('keeps a recent overdue and drops a stale one', () => {
     const now = KILL + LATEST_SPAWN_MS + 60_000
-    const staleKill = KILL - HUNT_STALE_OVERDUE_MS - 60_000
+    const staleKill = KILL - STALE_OVERDUE_MS - 60_000
     const rows = listHuntNow(
       boardAt({
         'berserker:na:1': KILL,
@@ -46,8 +46,14 @@ describe('listHuntNow', () => {
     expect(rows[0]?.priority).toBe('overdue')
   })
 
-  it('includes dead bosses whose window opens within 10 minutes', () => {
-    const now = KILL + EARLIEST_SPAWN_MS - 5 * 60_000
+  it('includes dead bosses whose window opens within 5 minutes', () => {
+    const now = KILL + EARLIEST_SPAWN_MS - 4 * 60_000
+    const rows = listHuntNow(boardAt({ 'gunslinger:na:2': KILL }), now, 'na')
+    expect(rows[0]?.priority).toBe('soon')
+  })
+
+  it('includes a window that opens in exactly 5 minutes', () => {
+    const now = KILL + EARLIEST_SPAWN_MS - HUNT_SOON_MS
     const rows = listHuntNow(boardAt({ 'gunslinger:na:2': KILL }), now, 'na')
     expect(rows[0]?.priority).toBe('soon')
   })

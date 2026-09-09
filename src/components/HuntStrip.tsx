@@ -30,8 +30,8 @@ export function HuntStrip({ board, now, serverId, onSelect }: HuntStripProps) {
         <div>
           <h2 className="font-heading text-sm font-medium">Hunt now</h2>
           <p className="text-xs text-muted-foreground">
-            {currentServer} only: should-be-up, open windows, and windows opening in the next 10
-            minutes. Overdue reports drop off after 30 minutes.
+            {currentServer} only: should-be-up, open windows, and windows opening in the next 5
+            minutes. Stale reports stay on the grid, not here.
           </p>
         </div>
         <Badge variant="outline">{actionable.length} ready</Badge>
@@ -39,7 +39,7 @@ export function HuntStrip({ board, now, serverId, onSelect }: HuntStripProps) {
       {actionable.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Nothing to hunt on this server right now. Log a tombstone, or wait until a window is within
-          10 minutes.
+          5 minutes.
         </p>
       ) : (
         <div className="flex gap-2 overflow-x-auto pb-1">

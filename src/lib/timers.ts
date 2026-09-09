@@ -1,6 +1,6 @@
-import { EARLIEST_SPAWN_MS, LATEST_SPAWN_MS } from '@/lib/game'
+import { EARLIEST_SPAWN_MS, LATEST_SPAWN_MS, STALE_OVERDUE_MS } from '@/lib/game'
 
-export const TIMER_STATUSES = ['unknown', 'dead', 'window', 'overdue'] as const
+export const TIMER_STATUSES = ['unknown', 'dead', 'window', 'overdue', 'stale'] as const
 export type TimerStatus = (typeof TIMER_STATUSES)[number]
 
 export type SpawnSnapshot = {
@@ -12,7 +12,7 @@ export type SpawnSnapshot = {
   msUntilWindow: number
   /** Milliseconds remaining in the spawn window. 0 if not in the window. */
   msLeftInWindow: number
-  /** Milliseconds since the window closed. 0 if not overdue. */
+  /** Milliseconds since the window closed. 0 if not overdue or stale. */
   msOverdue: number
 }
 
@@ -31,13 +31,12 @@ export function spawnSnapshot(killedAt: number | null, now: number): SpawnSnapsh
 
   const earliestSpawnAt = killedAt + EARLIEST_SPAWN_MS
   const latestSpawnAt = killedAt + LATEST_SPAWN_MS
+  const emptyTimes = { killedAt, earliestSpawnAt, latestSpawnAt }
 
   if (now < earliestSpawnAt) {
     return {
       status: 'dead',
-      killedAt,
-      earliestSpawnAt,
-      latestSpawnAt,
+      ...emptyTimes,
       msUntilWindow: earliestSpawnAt - now,
       msLeftInWindow: 0,
       msOverdue: 0,
@@ -47,23 +46,30 @@ export function spawnSnapshot(killedAt: number | null, now: number): SpawnSnapsh
   if (now <= latestSpawnAt) {
     return {
       status: 'window',
-      killedAt,
-      earliestSpawnAt,
-      latestSpawnAt,
+      ...emptyTimes,
       msUntilWindow: 0,
       msLeftInWindow: latestSpawnAt - now,
       msOverdue: 0,
     }
   }
 
+  const msOverdue = now - latestSpawnAt
+  if (msOverdue < STALE_OVERDUE_MS) {
+    return {
+      status: 'overdue',
+      ...emptyTimes,
+      msUntilWindow: 0,
+      msLeftInWindow: 0,
+      msOverdue,
+    }
+  }
+
   return {
-    status: 'overdue',
-    killedAt,
-    earliestSpawnAt,
-    latestSpawnAt,
+    status: 'stale',
+    ...emptyTimes,
     msUntilWindow: 0,
     msLeftInWindow: 0,
-    msOverdue: now - latestSpawnAt,
+    msOverdue,
   }
 }
 

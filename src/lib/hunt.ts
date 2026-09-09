@@ -3,9 +3,7 @@ import { killedAtMs, type BoardDoc, type TimerRecord } from '@/lib/board'
 import { spawnSnapshot, type SpawnSnapshot } from '@/lib/timers'
 
 /** Show a dead boss in Hunt now this long before the window opens. */
-export const HUNT_SOON_MS = 10 * 60 * 1000
-/** Hide overdue bosses after they have been past the window this long. */
-export const HUNT_STALE_OVERDUE_MS = 30 * 60 * 1000
+export const HUNT_SOON_MS = 5 * 60 * 1000
 
 export const HUNT_PRIORITIES = ['overdue', 'window', 'soon'] as const
 export type HuntPriority = (typeof HUNT_PRIORITIES)[number]
@@ -22,7 +20,7 @@ export type HuntRow = {
 
 function huntPriority(snap: SpawnSnapshot): HuntPriority | null {
   if (snap.status === 'window') return 'window'
-  if (snap.status === 'overdue' && snap.msOverdue <= HUNT_STALE_OVERDUE_MS) return 'overdue'
+  if (snap.status === 'overdue') return 'overdue'
   if (snap.status === 'dead' && snap.msUntilWindow > 0 && snap.msUntilWindow <= HUNT_SOON_MS) {
     return 'soon'
   }

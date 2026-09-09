@@ -21,6 +21,7 @@ const FILTERS: { id: HuntFilter; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'window', label: 'Can spawn' },
   { id: 'overdue', label: 'Should be up' },
+  { id: 'stale', label: 'Stale' },
   { id: 'dead', label: 'Dead' },
   { id: 'unknown', label: 'No report' },
 ]

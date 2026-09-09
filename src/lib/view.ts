@@ -10,6 +10,7 @@ export function countStatuses(board: BoardDoc, now: number, serverId?: ServerId)
     dead: 0,
     window: 0,
     overdue: 0,
+    stale: 0,
   }
   for (const boss of BOSSES) {
     for (const server of SERVERS) {

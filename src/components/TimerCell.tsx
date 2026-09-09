@@ -20,6 +20,7 @@ const STATUS_STYLES = {
     'border-amber-400/40 bg-amber-950/40 text-amber-50 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.12)] hover:border-amber-300/70',
   overdue:
     'border-emerald-400/40 bg-emerald-950/40 text-emerald-50 hover:border-emerald-300/70',
+  stale: 'border-zinc-500/40 bg-zinc-800/70 text-zinc-400 hover:border-zinc-400/50',
 }
 
 export function TimerCell({ channel, record, now, onClick, compact }: TimerCellProps) {
@@ -31,7 +32,9 @@ export function TimerCell({ channel, record, now, onClick, compact }: TimerCellP
         ? `Window in ${formatDuration(snap.msUntilWindow)}`
         : snap.status === 'window'
           ? `Can spawn · ${formatDuration(snap.msLeftInWindow)}`
-          : 'Should be up'
+          : snap.status === 'overdue'
+            ? 'Should be up'
+            : 'Stale report'
 
   return (
     <button

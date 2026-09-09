@@ -4,6 +4,8 @@ export const SPAWN_WINDOW_MS = 30 * 60 * 1000
 export const EARLIEST_SPAWN_MS = DEAD_MS + 1000
 /** Latest possible spawn: 60 minutes + 30 minutes after the kill. */
 export const LATEST_SPAWN_MS = DEAD_MS + SPAWN_WINDOW_MS
+/** After this long past the spawn window, a report is stale. */
+export const STALE_OVERDUE_MS = 30 * 60 * 1000
 
 export const BOSSES = [
   { id: 'berserker', name: 'Berserker Master', short: 'Berserker' },
