@@ -1,0 +1,243 @@
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import type { HuntFilter } from '@/lib/view'
+import { SERVERS, type ServerId } from '@/lib/game'
+import { formatClock, timezoneLabel } from '@/lib/format'
+import type { SyncState } from '@/hooks/useBoard'
+import { Link2, Loader2, Share2, Upload } from 'lucide-react'
+
+const FILTERS: { id: HuntFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'window', label: 'Can spawn' },
+  { id: 'overdue', label: 'Should be up' },
+  { id: 'dead', label: 'Dead' },
+  { id: 'unknown', label: 'No report' },
+]
+
+type HeaderProps = {
+  now: Date
+  playerName: string
+  onPlayerNameChange: (name: string) => void
+  serverId: ServerId
+  onServerChange: (id: ServerId) => void
+  filter: HuntFilter
+  onFilterChange: (filter: HuntFilter) => void
+  counts: Record<string, number>
+  syncState: SyncState
+  syncError: string | null
+  partyUrl: string | null
+  onCreateBoard: () => Promise<string>
+  onImport: (text: string) => void
+  exportPayload: string
+}
+
+export function Header({
+  now,
+  playerName,
+  onPlayerNameChange,
+  serverId,
+  onServerChange,
+  filter,
+  onFilterChange,
+  counts,
+  syncState,
+  syncError,
+  partyUrl,
+  onCreateBoard,
+  onImport,
+  exportPayload,
+}: HeaderProps) {
+  const [shareOpen, setShareOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [importText, setImportText] = useState('')
+
+  async function copyPartyLink() {
+    try {
+      let url = partyUrl
+      if (!url) {
+        setCreating(true)
+        url = `${window.location.origin}${window.location.pathname}?board=${await onCreateBoard()}`
+      }
+      await navigator.clipboard.writeText(url)
+      toast.success('Party link copied. Anyone with it can see and update timers.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not create a party link')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  function applyImport() {
+    try {
+      onImport(importText)
+      setImportText('')
+      toast.success('Imported timer reports')
+    } catch {
+      toast.error('That JSON is not a valid board export')
+    }
+  }
+
+  return (
+    <header className="border-b border-border/80 bg-[linear-gradient(180deg,oklch(0.21_0.03_260),oklch(0.17_0.025_260))]">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-medium tracking-[0.22em] text-primary/80 uppercase">
+              SpiritVale
+            </p>
+            <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+              Master Boss Board
+            </h1>
+            <p className="max-w-xl text-sm text-muted-foreground">
+              Shared timers for the seven class masters across every server and channel.
+              All countdowns use this computer&apos;s clock.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="rounded-xl border border-primary/20 bg-background/40 px-4 py-3">
+              <p className="text-[11px] tracking-wide text-muted-foreground uppercase">
+                Local time · {timezoneLabel(now)}
+              </p>
+              <p className="font-heading text-xl font-medium tabular-nums">{formatClock(now)}</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Input
+                value={playerName}
+                onChange={(event) => onPlayerNameChange(event.target.value)}
+                placeholder="Your hunter name"
+                aria-label="Hunter name"
+                className="w-full sm:w-48"
+              />
+              <Button onClick={() => setShareOpen(true)}>
+                <Share2 data-icon="inline-start" />
+                Share board
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={syncState === 'live' ? 'default' : 'outline'} className="capitalize">
+              {syncState === 'connecting' && <Loader2 className="animate-spin" />}
+              {syncState === 'local' && 'Local only'}
+              {syncState === 'connecting' && 'Connecting'}
+              {syncState === 'live' && 'Live party board'}
+              {syncState === 'error' && 'Sync issue'}
+            </Badge>
+            {syncError ? (
+              <p className="text-xs text-destructive">{syncError}</p>
+            ) : syncState === 'local' ? (
+              <p className="text-xs text-muted-foreground">
+                Timers stay on this browser until you share a party link.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Polling the shared board every few seconds.</p>
+            )}
+          </div>
+
+          <div className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+            {SERVERS.map((server) => (
+              <Button
+                key={server.id}
+                size="sm"
+                variant={serverId === server.id ? 'default' : 'outline'}
+                onClick={() => onServerChange(server.id)}
+              >
+                {server.name}
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {FILTERS.map((item) => (
+              <Button
+                key={item.id}
+                size="xs"
+                variant={filter === item.id ? 'secondary' : 'ghost'}
+                onClick={() => onFilterChange(item.id)}
+              >
+                {item.label}
+                {item.id !== 'all' ? (
+                  <span className="tabular-nums text-muted-foreground">{counts[item.id] ?? 0}</span>
+                ) : null}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Share this board</DialogTitle>
+            <DialogDescription>
+              One link keeps the whole party on the same kill reports. Anyone with the link can
+              update a tombstone time.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="party-link">Party link</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="party-link"
+                  readOnly
+                  value={partyUrl ?? 'Create a shared board to get a link'}
+                />
+                <Button onClick={() => void copyPartyLink()} disabled={creating}>
+                  {creating ? <Loader2 className="animate-spin" /> : <Link2 />}
+                  Copy
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="export-json">Backup JSON</Label>
+              <textarea
+                id="export-json"
+                readOnly
+                value={exportPayload}
+                className="h-24 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 font-mono text-xs"
+              />
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(exportPayload)
+                  toast.success('Board JSON copied')
+                }}
+              >
+                Copy JSON
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="import-json">Import JSON</Label>
+              <textarea
+                id="import-json"
+                value={importText}
+                onChange={(event) => setImportText(event.target.value)}
+                placeholder="Paste a board export to merge it in"
+                className="h-20 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 font-mono text-xs"
+              />
+              <Button variant="outline" onClick={applyImport} disabled={!importText.trim()}>
+                <Upload data-icon="inline-start" />
+                Merge import
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </header>
+  )
+}

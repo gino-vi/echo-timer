@@ -1,0 +1,85 @@
+# SpiritVale Boss Board
+
+A lightweight shared dashboard for tracking **class master** boss respawns in SpiritVale. It is built for a small hunting group (about six people), not a game-wide platform.
+
+The board tracks seven masters across **6 servers** and **3 channels**:
+
+- Berserker Master
+- Gunslinger Master
+- Necromancer Master
+- Paladin Master
+- Priest Master
+- Shinobi Master
+- Wizard Master
+
+Servers: **NA, Europe, Asia, South America, SEA, OCE**.
+
+## How timers work
+
+When a master dies it is down for **60 minutes**. After that it can spawn anywhere from **1 second to 30 minutes**. The board stores the kill time and derives everything else from **your computer clock**:
+
+| Time since kill | Status |
+| --- | --- |
+| 0:00 – 60:00 | Dead. Countdown to the spawn window. |
+| 60:01 – 90:00 | Spawn window. The boss can appear at any moment. |
+| After 90:00 | Overdue. It should already be up. |
+
+Kill times are saved as UTC and shown in each player's local timezone. That is why a hunter in NA and a hunter in SEA can look at the same board and still see times that match their own PCs.
+
+## Stack (and why it is this light)
+
+GitHub Pages can only host static files. There is no Node server, database, or login system.
+
+| Piece | Choice | Why |
+| --- | --- | --- |
+| App | Vite + React + TypeScript | Fast static SPA that deploys cleanly to GitHub Pages. |
+| UI | Tailwind + shadcn/ui | Enough structure for a dashboard without a heavy design system. |
+| Time | `Date.now()` in the browser | Uses each player's computer clock. |
+| Local cache | `localStorage` | The board still works if the network drops. |
+| Shared sync | [MantleDB](https://mantledb.sh) JSON store | Tiny anonymous key-value API with CORS, so six people can share one link without standing up Firebase/Supabase. |
+
+Next.js, auth, and a custom backend would be wasted weight here. The live data is 126 possible timers (7 × 6 × 3) and a handful of concurrent editors.
+
+Anyone with the party link can read and write. That matches a private Discord pin, not a public internet service.
+
+## Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+The dev server listens on [http://127.0.0.1:43123](http://127.0.0.1:43123).
+
+```bash
+npm test
+npm run build
+npm run preview
+```
+
+## Use it with your party
+
+1. Open the site and set **Your hunter name**.
+2. Click a boss channel and enter the tombstone time. Use **Killed just now**, **Minutes ago**, the **clock time on the tombstone**, or an exact local datetime.
+3. Click **Share board** and copy the party link into Discord.
+4. Everyone else opens that same link. Updates merge per boss/server/channel (latest report wins).
+
+The app also works local-only on one computer until you create a shared board. JSON export/import is there as a backup if you ever need to move data by hand.
+
+## GitHub Pages
+
+1. Push this repo to GitHub.
+2. In the repo: **Settings → Pages → GitHub Actions**.
+3. The workflow in `.github/workflows/github-pages.yml` builds and deploys `dist/` on every push to `main`.
+
+The Vite `base` is `./`, so the app works at both `https://<user>.github.io/<repo>/` and a custom domain.
+
+Shared board state is **not** stored in the GitHub repo. The Pages site is only the UI. Timer data lives in the shared MantleDB namespace created when you copy a party link. Claimed boards stay around for 90 days of inactivity.
+
+## Assumptions
+
+- In-game name **Necromaster Master** is tracked as **Necromancer Master**.
+- Tombstone times are entered in the player's local clock. If a grave shows a different timezone, convert it before saving.
+- Channels are 1–3 on each listed server.
+
+If those are wrong, the timer math and boss list are isolated in `src/lib/game.ts` and `src/lib/timers.ts`.
