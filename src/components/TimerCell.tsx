@@ -45,7 +45,6 @@ export function TimerCell({ channel, record, now, onClick, onQuickKill, compact 
   return (
     <button
       type="button"
-      title="Click for tombstone time. Right-click to log killed now."
       onClick={onClick}
       onContextMenu={(event) => {
         event.preventDefault()

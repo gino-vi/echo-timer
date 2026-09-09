@@ -51,7 +51,6 @@ export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntS
                 key={row.key}
                 variant="outline"
                 className="h-auto min-w-44 flex-col items-start gap-1 px-3 py-2"
-                title="Click for tombstone time. Right-click to log killed now."
                 onClick={() =>
                   onSelect({
                     bossId: row.bossId,
