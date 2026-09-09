@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  applyLivePayload,
   decodeRoom,
   encodeRoom,
   mergeBoards,
   randomNamespace,
   setTimer,
   type BoardDoc,
+  type LivePayload,
   type Room,
   type TimerRecord,
 } from '@/lib/board'
@@ -20,10 +22,14 @@ import {
   savePlayerName,
   saveServerId,
 } from '@/lib/localStore'
+import { connectLiveRoom, type LiveChannel } from '@/lib/liveSync'
 import { claimNamespace, fetchBoard, saveBoard } from '@/lib/remoteStore'
 import { isServerId, type ServerId } from '@/lib/game'
 
 export type SyncState = 'local' | 'connecting' | 'live' | 'error'
+
+const FAST_POLL_MS = 3000
+const SLOW_POLL_MS = 20000
 
 function roomFromUrl(): Room | null {
   const params = new URLSearchParams(window.location.search)
@@ -48,6 +54,7 @@ export function useBoard() {
     roomFromUrl() || loadLocalRoom() ? 'connecting' : 'local',
   )
   const [syncError, setSyncError] = useState<string | null>(null)
+  const [hunterCount, setHunterCount] = useState(0)
   const [playerName, setPlayerNameState] = useState(() => loadPlayerName())
   const [serverId, setServerIdState] = useState<ServerId>(() => {
     const saved = loadServerId()
@@ -56,6 +63,8 @@ export function useBoard() {
 
   const boardRef = useRef(board)
   const roomRef = useRef(room)
+  const liveRef = useRef<LiveChannel | null>(null)
+  const hunterCountRef = useRef(0)
   const writeChain = useRef(Promise.resolve())
 
   useEffect(() => {
@@ -68,6 +77,13 @@ export function useBoard() {
     saveLocalRoom(room)
     writeRoomToUrl(room)
   }, [room])
+
+  const applyIncoming = useCallback((payload: LivePayload) => {
+    const next = applyLivePayload(boardRef.current, payload)
+    if (next === boardRef.current) return
+    boardRef.current = next
+    setBoard(next)
+  }, [])
 
   const pushRemote = useCallback(async (next: BoardDoc) => {
     const currentRoom = roomRef.current
@@ -92,6 +108,10 @@ export function useBoard() {
     },
     [pushRemote],
   )
+
+  const broadcast = useCallback((payload: LivePayload) => {
+    liveRef.current?.send(payload)
+  }, [])
 
   const refreshRemote = useCallback(async () => {
     const currentRoom = roomRef.current
@@ -120,18 +140,52 @@ export function useBoard() {
 
   useEffect(() => {
     if (!room) {
+      setHunterCount(0)
+      hunterCountRef.current = 0
+      liveRef.current = null
+      return
+    }
+
+    const channel = connectLiveRoom(room.ns, {
+      getBoard: () => boardRef.current,
+      onMessage: applyIncoming,
+      onPeers: (count) => {
+        hunterCountRef.current = count
+        setHunterCount(count)
+      },
+    })
+    liveRef.current = channel
+    return () => {
+      channel.leave()
+      if (liveRef.current === channel) {
+        liveRef.current = null
+      }
+    }
+  }, [room, applyIncoming])
+
+  useEffect(() => {
+    if (!room) {
       return
     }
     void refreshRemote()
-    const poll = () => {
-      if (document.visibilityState === 'hidden') return
-      void refreshRemote()
+
+    let timer = 0
+    const schedule = () => {
+      window.clearTimeout(timer)
+      const delay = hunterCountRef.current > 0 ? SLOW_POLL_MS : FAST_POLL_MS
+      timer = window.setTimeout(tick, delay)
     }
-    const id = window.setInterval(poll, 4000)
-    document.addEventListener('visibilitychange', poll)
+    const tick = () => {
+      if (document.visibilityState !== 'hidden') {
+        void refreshRemote()
+      }
+      schedule()
+    }
+    schedule()
+    document.addEventListener('visibilitychange', tick)
     return () => {
-      window.clearInterval(id)
-      document.removeEventListener('visibilitychange', poll)
+      window.clearTimeout(timer)
+      document.removeEventListener('visibilitychange', tick)
     }
   }, [room, refreshRemote])
 
@@ -155,9 +209,10 @@ export function useBoard() {
       const next = setTimer(boardRef.current, key, record)
       boardRef.current = next
       setBoard(next)
+      broadcast({ type: 'patch', key, record })
       enqueuePush(next)
     },
-    [enqueuePush, playerName],
+    [broadcast, enqueuePush, playerName],
   )
 
   const clearTimer = useCallback(
@@ -170,9 +225,10 @@ export function useBoard() {
       const next = setTimer(boardRef.current, key, record)
       boardRef.current = next
       setBoard(next)
+      broadcast({ type: 'patch', key, record })
       enqueuePush(next)
     },
-    [enqueuePush, playerName],
+    [broadcast, enqueuePush, playerName],
   )
 
   const createSharedBoard = useCallback(async () => {
@@ -206,9 +262,10 @@ export function useBoard() {
       const next = mergeBoards(incoming, boardRef.current)
       boardRef.current = next
       setBoard(next)
+      broadcast({ type: 'snapshot', board: next })
       enqueuePush(next)
     },
-    [enqueuePush],
+    [broadcast, enqueuePush],
   )
 
   const partyUrl = room
@@ -220,6 +277,7 @@ export function useBoard() {
     room,
     syncState,
     syncError,
+    hunterCount,
     playerName,
     serverId,
     partyUrl,

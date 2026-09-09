@@ -36,6 +36,7 @@ type HeaderProps = {
   counts: Record<string, number>
   syncState: SyncState
   syncError: string | null
+  hunterCount: number
   partyUrl: string | null
   onCreateBoard: () => Promise<string>
   onImport: (text: string) => void
@@ -53,6 +54,7 @@ export function Header({
   counts,
   syncState,
   syncError,
+  hunterCount,
   partyUrl,
   onCreateBoard,
   onImport,
@@ -70,7 +72,7 @@ export function Header({
         url = `${window.location.origin}${window.location.pathname}?board=${await onCreateBoard()}`
       }
       await navigator.clipboard.writeText(url)
-      toast.success('Party link copied. Anyone with it can see and update timers.')
+      toast.success('Party link copied. Keep this URL open — kills show up live for everyone using it.')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not create a party link')
     } finally {
@@ -130,21 +132,28 @@ export function Header({
 
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={syncState === 'live' ? 'default' : 'outline'} className="capitalize">
+            <Badge variant={syncState === 'live' ? 'default' : 'outline'}>
               {syncState === 'connecting' && <Loader2 className="animate-spin" />}
               {syncState === 'local' && 'Local only'}
               {syncState === 'connecting' && 'Connecting'}
-              {syncState === 'live' && 'Live party board'}
+              {syncState === 'live' && hunterCount > 0 && `Live · ${hunterCount + 1} hunters`}
+              {syncState === 'live' && hunterCount === 0 && 'Live · waiting for party'}
               {syncState === 'error' && 'Sync issue'}
             </Badge>
             {syncError ? (
               <p className="text-xs text-destructive">{syncError}</p>
             ) : syncState === 'local' ? (
               <p className="text-xs text-muted-foreground">
-                Timers stay on this browser until you share a party link.
+                Not live yet. Share a party link so Asia and NA reports update instantly for everyone.
+              </p>
+            ) : hunterCount > 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Connected hunters see new tombstones immediately. Do not use JSON import to stay in sync.
               </p>
             ) : (
-              <p className="text-xs text-muted-foreground">Polling the shared board every few seconds.</p>
+              <p className="text-xs text-muted-foreground">
+                This board is live. Other hunters appear here as soon as they open the same party link.
+              </p>
             )}
           </div>
 
@@ -184,8 +193,8 @@ export function Header({
           <DialogHeader>
             <DialogTitle>Share this board</DialogTitle>
             <DialogDescription>
-              One link keeps the whole party on the same kill reports. Anyone with the link can
-              update a tombstone time.
+              Everyone must open and keep this same link. New tombstone times are pushed to the party
+              immediately. JSON import is a one-time backup, not live sync.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -227,7 +236,7 @@ export function Header({
                 id="import-json"
                 value={importText}
                 onChange={(event) => setImportText(event.target.value)}
-                placeholder="Paste a board export to merge it in"
+                placeholder="Paste a board export to merge a backup. This does not subscribe you to live updates."
                 className="h-20 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 font-mono text-xs"
               />
               <Button variant="outline" onClick={applyImport} disabled={!importText.trim()}>

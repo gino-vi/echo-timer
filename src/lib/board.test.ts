@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { decodeRoom, encodeRoom, mergeBoards, type BoardDoc } from '@/lib/board'
+import {
+  applyLivePayload,
+  decodeRoom,
+  encodeRoom,
+  mergeBoards,
+  type BoardDoc,
+} from '@/lib/board'
 
 describe('mergeBoards', () => {
   it('keeps the newest report per boss channel', () => {
@@ -40,6 +46,57 @@ describe('mergeBoards', () => {
     expect(merged.timers['berserker:na:1']?.reportedBy).toBe('Ben')
     expect(merged.timers['wizard:na:2']?.reportedBy).toBe('Ada')
     expect(merged.timers['priest:eu:3']?.killedAt).toBeNull()
+  })
+})
+
+describe('applyLivePayload', () => {
+  it('applies a newer live patch immediately', () => {
+    const board: BoardDoc = {
+      version: 1,
+      name: 'A',
+      timers: {
+        'berserker:asia:1': {
+          killedAt: '2026-09-09T01:00:00.000Z',
+          updatedAt: '2026-09-09T01:00:00.000Z',
+          reportedBy: 'Ada',
+        },
+      },
+    }
+    const next = applyLivePayload(board, {
+      type: 'patch',
+      key: 'wizard:na:2',
+      record: {
+        killedAt: '2026-09-09T01:02:00.000Z',
+        updatedAt: '2026-09-09T01:02:00.000Z',
+        reportedBy: 'Ben',
+      },
+    })
+    expect(next.timers['wizard:na:2']?.reportedBy).toBe('Ben')
+    expect(next.timers['berserker:asia:1']?.reportedBy).toBe('Ada')
+  })
+
+  it('ignores an older patch for the same cell', () => {
+    const board: BoardDoc = {
+      version: 1,
+      name: 'A',
+      timers: {
+        'wizard:na:2': {
+          killedAt: '2026-09-09T01:10:00.000Z',
+          updatedAt: '2026-09-09T01:10:00.000Z',
+          reportedBy: 'Ben',
+        },
+      },
+    }
+    const next = applyLivePayload(board, {
+      type: 'patch',
+      key: 'wizard:na:2',
+      record: {
+        killedAt: '2026-09-09T01:00:00.000Z',
+        updatedAt: '2026-09-09T01:00:00.000Z',
+        reportedBy: 'Ada',
+      },
+    })
+    expect(next.timers['wizard:na:2']?.reportedBy).toBe('Ben')
   })
 })
 

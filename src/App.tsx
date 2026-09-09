@@ -40,6 +40,7 @@ export default function App() {
         counts={counts}
         syncState={boardState.syncState}
         syncError={boardState.syncError}
+        hunterCount={boardState.hunterCount}
         partyUrl={boardState.partyUrl}
         onCreateBoard={boardState.createSharedBoard}
         onImport={handleImport}

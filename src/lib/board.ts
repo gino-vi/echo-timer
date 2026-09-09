@@ -86,3 +86,24 @@ export function killedAtMs(record: TimerRecord | undefined): number | null {
   const value = Date.parse(record.killedAt)
   return Number.isNaN(value) ? null : value
 }
+
+export type LivePayload =
+  | { type: 'patch'; key: string; record: TimerRecord }
+  | { type: 'snapshot'; board: BoardDoc }
+
+export function applyLivePayload(board: BoardDoc, payload: LivePayload): BoardDoc {
+  if (payload.type === 'snapshot') {
+    return mergeBoards(board, payload.board)
+  }
+  const existing = board.timers[payload.key]
+  if (existing && existing.updatedAt >= payload.record.updatedAt) {
+    return board
+  }
+  return {
+    ...board,
+    timers: {
+      ...board.timers,
+      [payload.key]: payload.record,
+    },
+  }
+}

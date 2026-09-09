@@ -36,7 +36,8 @@ GitHub Pages can only host static files. There is no Node server, database, or l
 | UI | Tailwind + shadcn/ui | Enough structure for a dashboard without a heavy design system. |
 | Time | `Date.now()` in the browser | Uses each player's computer clock. |
 | Local cache | `localStorage` | The board still works if the network drops. |
-| Shared sync | [MantleDB](https://mantledb.sh) JSON store | Tiny anonymous key-value API with CORS, so six people can share one link without standing up Firebase/Supabase. |
+| Shared store | [MantleDB](https://mantledb.sh) | Persists the board so people can join later or refresh. |
+| Live updates | WebRTC via [Trystero](https://github.com/dmotz/trystero) + `BroadcastChannel` | A kill is pushed to everyone currently on the party link immediately. |
 
 Next.js, auth, and a custom backend would be wasted weight here. The live data is 126 possible timers (7 × 6 × 3) and a handful of concurrent editors.
 
@@ -62,9 +63,9 @@ npm run preview
 1. Open the site and set **Your hunter name**.
 2. Click a boss channel and enter the tombstone time. Use **Killed just now**, **Minutes ago**, the **clock time on the tombstone**, or an exact local datetime.
 3. Click **Share board** and copy the party link into Discord.
-4. Everyone else opens that same link. Updates merge per boss/server/channel (latest report wins).
+4. Everyone else opens **that same link** and leaves it open. New kills are pushed to the party immediately. Player 2 logging Asia and Player 3 logging NA will both appear on every open board.
 
-The app also works local-only on one computer until you create a shared board. JSON export/import is there as a backup if you ever need to move data by hand.
+JSON export/import is a backup only. Importing a file does **not** subscribe you to later reports.
 
 ## GitHub Pages
 
