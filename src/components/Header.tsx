@@ -137,7 +137,7 @@ export function Header({
               {syncState === 'local' && 'Local only'}
               {syncState === 'connecting' && 'Connecting'}
               {syncState === 'live' && hunterCount > 0 && `Live · ${hunterCount + 1} hunters`}
-              {syncState === 'live' && hunterCount === 0 && 'Live · waiting for party'}
+              {syncState === 'live' && hunterCount === 0 && 'Live board'}
               {syncState === 'error' && 'Sync issue'}
             </Badge>
             {syncError ? (
@@ -152,7 +152,7 @@ export function Header({
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                This board is live. Other hunters appear here as soon as they open the same party link.
+                Kills from anyone on this party link show up immediately. Leave the tab open while you hunt.
               </p>
             )}
           </div>
