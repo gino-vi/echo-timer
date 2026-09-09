@@ -3,7 +3,7 @@ import { killedAtMs, type BoardDoc, type TimerRecord } from '@/lib/board'
 import { spawnSnapshot, type SpawnSnapshot } from '@/lib/timers'
 
 /** Show a dead boss in Hunt now this long before the window opens. */
-export const HUNT_SOON_MS = 5 * 60 * 1000
+export const HUNT_SOON_MS = 30 * 60 * 1000
 
 export const HUNT_PRIORITIES = ['overdue', 'window', 'soon'] as const
 export type HuntPriority = (typeof HUNT_PRIORITIES)[number]
