@@ -32,10 +32,15 @@ export function TimerCell({ channel, record, now, onClick, onQuickKill, compact 
       : snap.status === 'dead'
         ? `Window in ${formatDuration(snap.msUntilWindow)}`
         : snap.status === 'window'
-          ? `Can spawn · ${formatDuration(snap.msLeftInWindow)}`
+          ? 'Can spawn'
           : snap.status === 'overdue'
             ? 'Should be up'
             : 'Stale report'
+
+  const flavor =
+    snap.status === 'window'
+      ? `${formatDuration(snap.msLeftInWindow)} until guaranteed spawn`
+      : null
 
   return (
     <button
@@ -57,6 +62,7 @@ export function TimerCell({ channel, record, now, onClick, onQuickKill, compact 
         {snap.status !== 'unknown' ? <span>{snap.status}</span> : <span>Log kill</span>}
       </span>
       <span className={cn('font-medium', compact ? 'text-sm' : 'text-[0.95rem]')}>{headline}</span>
+      {flavor ? <span className="text-xs opacity-90">{flavor}</span> : null}
       {snap.killedAt ? (
         <span className="text-xs opacity-80">
           Died {formatTime(snap.killedAt)}
