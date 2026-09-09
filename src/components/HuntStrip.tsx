@@ -32,8 +32,8 @@ export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntS
         <div>
           <h2 className="font-heading text-sm font-medium">Hunt now</h2>
           <p className="text-xs text-muted-foreground">
-            {currentServer} only: should-be-up, open windows, and windows opening in the next 5
-            minutes. Stale reports stay on the grid, not here.
+            {currentServer} only: should-be-up for 30 minutes, open windows, and windows opening in
+            the next 5 minutes. Stale reports stay on the grid, not here.
           </p>
         </div>
         <Badge variant="outline">{actionable.length} ready</Badge>

@@ -58,8 +58,24 @@ describe('listHuntNow', () => {
     expect(rows[0]?.priority).toBe('soon')
   })
 
-  it('excludes dead bosses that are still far from the window', () => {
-    const now = KILL + EARLIEST_SPAWN_MS - HUNT_SOON_MS - 60_000
+  it('drops overdue Hunt now cards after 30 minutes', () => {
+    const stillUp = listHuntNow(
+      boardAt({ 'berserker:na:1': KILL }),
+      KILL + LATEST_SPAWN_MS + STALE_OVERDUE_MS - 1,
+      'na',
+    )
+    expect(stillUp[0]?.priority).toBe('overdue')
+
+    const gone = listHuntNow(
+      boardAt({ 'berserker:na:1': KILL }),
+      KILL + LATEST_SPAWN_MS + STALE_OVERDUE_MS,
+      'na',
+    )
+    expect(gone).toEqual([])
+  })
+
+  it('does not treat a window 6 minutes away as soon', () => {
+    const now = KILL + EARLIEST_SPAWN_MS - 6 * 60_000
     const rows = listHuntNow(boardAt({ 'gunslinger:na:2': KILL }), now, 'na')
     expect(rows).toEqual([])
   })
