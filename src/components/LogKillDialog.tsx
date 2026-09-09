@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -11,7 +11,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { BOSSES, SERVERS } from '@/lib/game'
-import { fromDatetimeLocalValue, toDatetimeLocalValue } from '@/lib/format'
 import type { SelectedCell } from '@/lib/view'
 
 type LogKillDialogProps = {
@@ -22,12 +21,9 @@ type LogKillDialogProps = {
   onClear: () => void
 }
 
-function freshClock() {
+function freshClockTime() {
   const current = new Date()
-  return {
-    datetimeLocal: toDatetimeLocalValue(current),
-    clockTime: `${String(current.getHours()).padStart(2, '0')}:${String(current.getMinutes()).padStart(2, '0')}`,
-  }
+  return `${String(current.getHours()).padStart(2, '0')}:${String(current.getMinutes()).padStart(2, '0')}`
 }
 
 function KillForm({
@@ -41,15 +37,12 @@ function KillForm({
   onSave: (killedAt: Date) => void
   onClear: () => void
 }) {
-  const initial = freshClock()
-  const [datetimeLocal, setDatetimeLocal] = useState(initial.datetimeLocal)
   const [minutesAgo, setMinutesAgo] = useState('5')
-  const [clockTime, setClockTime] = useState(initial.clockTime)
+  const [clockTime, setClockTime] = useState(freshClockTime)
   const [error, setError] = useState<string | null>(null)
 
   const boss = BOSSES.find((item) => item.id === target.bossId)
   const server = SERVERS.find((item) => item.id === target.serverId)
-  const preview = useMemo(() => fromDatetimeLocalValue(datetimeLocal), [datetimeLocal])
 
   function saveDate(date: Date | null) {
     if (!date) {
@@ -140,21 +133,6 @@ function KillForm({
           </p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="kill-datetime">Exact local date and time</Label>
-          <Input
-            id="kill-datetime"
-            type="datetime-local"
-            value={datetimeLocal}
-            onChange={(event) => setDatetimeLocal(event.target.value)}
-          />
-          {preview ? (
-            <p className="text-xs text-muted-foreground">
-              Saves as {preview.toLocaleString()} on this computer.
-            </p>
-          ) : null}
-        </div>
-
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
       </div>
 
@@ -168,12 +146,9 @@ function KillForm({
         >
           Clear report
         </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={() => saveDate(preview)}>Save kill time</Button>
-        </div>
+        <Button variant="outline" onClick={() => onOpenChange(false)}>
+          Cancel
+        </Button>
       </DialogFooter>
     </>
   )

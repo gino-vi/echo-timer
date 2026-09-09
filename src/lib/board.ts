@@ -81,6 +81,24 @@ export function setTimer(board: BoardDoc, key: TimerKey, record: TimerRecord): B
   }
 }
 
+export function hasKillReports(board: BoardDoc): boolean {
+  return Object.values(board.timers).some((record) => record.killedAt != null)
+}
+
+export function clearAllTimers(board: BoardDoc, reportedBy: string): BoardDoc {
+  const updatedAt = new Date().toISOString()
+  const reporter = reportedBy.trim() || 'Anonymous'
+  const timers: Record<string, TimerRecord> = {}
+  for (const key of Object.keys(board.timers)) {
+    timers[key] = {
+      killedAt: null,
+      updatedAt,
+      reportedBy: reporter,
+    }
+  }
+  return { ...board, timers }
+}
+
 export function killedAtMs(record: TimerRecord | undefined): number | null {
   if (!record?.killedAt) return null
   const value = Date.parse(record.killedAt)

@@ -19,6 +19,11 @@ export default function App() {
 
   const counts = countStatuses(boardState.board, nowMs, boardState.serverId)
 
+  function logKilledNow(cell: SelectedCell) {
+    boardState.reportKill(timerKey(cell.bossId, cell.serverId, cell.channel), new Date())
+    toast.success('Logged as killed now')
+  }
+
   function handleImport(text: string) {
     const parsed = JSON.parse(text) as BoardDoc
     if (parsed.version !== 1 || typeof parsed.timers !== 'object') {
@@ -44,6 +49,8 @@ export default function App() {
         partyUrl={boardState.partyUrl}
         onCreateBoard={boardState.createSharedBoard}
         onImport={handleImport}
+        onClearAll={boardState.clearAllTimers}
+        hasReports={boardState.hasReports}
         exportPayload={JSON.stringify(boardState.board, null, 2)}
       />
 
@@ -53,22 +60,16 @@ export default function App() {
           now={nowMs}
           serverId={boardState.serverId}
           onSelect={setSelected}
+          onQuickKill={logKilledNow}
         />
 
         <section className="space-y-3">
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <h2 className="font-heading text-sm font-medium">Server board</h2>
-              <p className="text-xs text-muted-foreground">
-                Dead for 60 minutes, then a 1-second to 30-minute spawn window. Click a channel to
-                log the tombstone.
-              </p>
-            </div>
-            <div className="hidden text-right text-[11px] tracking-wide text-muted-foreground uppercase sm:block">
-              <p>Rose = dead</p>
-              <p>Gold = spawn window</p>
-              <p>Green = should be up</p>
-            </div>
+          <div>
+            <h2 className="font-heading text-sm font-medium">Server board</h2>
+            <p className="text-xs text-muted-foreground">
+              Dead for 60 minutes, then a 1-second to 30-minute spawn window. Click a channel to
+              log a tombstone time, or right-click to log killed now.
+            </p>
           </div>
           <BossGrid
             board={boardState.board}
@@ -76,6 +77,7 @@ export default function App() {
             now={nowMs}
             filter={filter}
             onSelect={setSelected}
+            onQuickKill={logKilledNow}
           />
         </section>
       </main>

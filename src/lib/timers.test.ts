@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEAD_MS, EARLIEST_SPAWN_MS, LATEST_SPAWN_MS } from '@/lib/game'
+import { DEAD_MS, EARLIEST_SPAWN_MS, LATEST_SPAWN_MS, STALE_OVERDUE_MS } from '@/lib/game'
 import { formatDuration, spawnSnapshot } from '@/lib/timers'
 
 const KILL = Date.parse('2026-09-09T12:00:00.000Z')
@@ -31,6 +31,13 @@ describe('spawnSnapshot', () => {
     const overdue = spawnSnapshot(KILL, KILL + LATEST_SPAWN_MS + 1)
     expect(overdue.status).toBe('overdue')
     expect(overdue.msOverdue).toBe(1)
+  })
+
+  it('turns overdue into stale after 30 minutes', () => {
+    const stillOverdue = spawnSnapshot(KILL, KILL + LATEST_SPAWN_MS + STALE_OVERDUE_MS - 1)
+    expect(stillOverdue.status).toBe('overdue')
+    const stale = spawnSnapshot(KILL, KILL + LATEST_SPAWN_MS + STALE_OVERDUE_MS)
+    expect(stale.status).toBe('stale')
   })
 })
 

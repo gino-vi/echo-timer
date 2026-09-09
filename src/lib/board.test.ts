@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyLivePayload,
+  clearAllTimers,
   decodeRoom,
   encodeRoom,
   mergeBoards,
@@ -46,6 +47,36 @@ describe('mergeBoards', () => {
     expect(merged.timers['berserker:na:1']?.reportedBy).toBe('Ben')
     expect(merged.timers['wizard:na:2']?.reportedBy).toBe('Ada')
     expect(merged.timers['priest:eu:3']?.killedAt).toBeNull()
+  })
+})
+
+describe('clearAllTimers', () => {
+  it('nulls every kill so a later merge cannot revive them', () => {
+    const local: BoardDoc = {
+      version: 1,
+      name: 'A',
+      timers: {
+        'berserker:na:1': {
+          killedAt: '2026-09-09T01:00:00.000Z',
+          updatedAt: '2026-09-09T01:00:00.000Z',
+          reportedBy: 'Ada',
+        },
+      },
+    }
+    const cleared = clearAllTimers(local, 'Ada')
+    expect(cleared.timers['berserker:na:1']?.killedAt).toBeNull()
+    const remoteStillHasKill: BoardDoc = {
+      version: 1,
+      name: 'A',
+      timers: {
+        'berserker:na:1': {
+          killedAt: '2026-09-09T01:00:00.000Z',
+          updatedAt: '2026-09-09T01:00:00.000Z',
+          reportedBy: 'Ada',
+        },
+      },
+    }
+    expect(mergeBoards(cleared, remoteStillHasKill).timers['berserker:na:1']?.killedAt).toBeNull()
   })
 })
 
