@@ -27,7 +27,7 @@ When a master dies it is down for **60 minutes**. After that it can spawn anywhe
 
 Hunt now lists overdue bosses for **30 minutes**, open windows, and dead bosses whose window opens in **5 minutes or less**. Open windows count **up** from 0:01 for how long they have been available; the grid still shows time until the guaranteed spawn. After 30 minutes overdue, the report turns Stale on the grid and leaves Hunt now.
 
-Kill times are saved as UTC and shown in each player's local timezone. That is why a hunter in NA and a hunter in SEA can look at the same board and still see times that match their own PCs.
+Kill times are saved as UTC and shown in each player's local timezone. That is why a player in NA and a player in SEA can look at the same board and still see times that match their own PCs.
 
 ## Stack (and why it is this light)
 
@@ -63,7 +63,7 @@ npm run preview
 
 ## Use it with your party
 
-1. Open the site and set **Your hunter name**.
+1. Open the site and set **Your character name**.
 2. Click a boss channel and enter the tombstone time, or **right-click** the cell to log it as killed now. In the dialog, use **Killed just now**, **Minutes ago**, or the **clock time on the tombstone**.
 3. Click **Share board** and copy the party link into Discord.
 4. Everyone else opens **that same link** and leaves it open. New kills are pushed to the party immediately. Player 2 logging Asia and Player 3 logging NA will both appear on every open board.

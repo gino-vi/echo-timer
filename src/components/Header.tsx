@@ -172,15 +172,15 @@ export function Header({
               <p className="text-xs text-destructive">{syncError}</p>
             ) : syncState === 'local' ? (
               <p className="text-xs text-muted-foreground">
-                Not live yet. Share a party link so Asia and NA reports update instantly for everyone.
+                Your board is local only.
               </p>
             ) : hunterCount > 0 ? (
               <p className="text-xs text-muted-foreground">
-                Connected hunters see new tombstones immediately. Do not use JSON import to stay in sync.
+                Connected players see new tombstones immediately.
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Kills from anyone on this party link show up immediately. Leave the tab open while you hunt.
+                Reported timers from anyone on this party link show up immediately. Leave the tab open while you MVP.
               </p>
             )}
           </div>
