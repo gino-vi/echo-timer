@@ -1,7 +1,6 @@
 import { BOSSES, CHANNELS, timerKey, type ServerId } from '@/lib/game'
+import { spawnFromRecord } from '@/lib/timers'
 import type { BoardDoc } from '@/lib/board'
-import { spawnSnapshot } from '@/lib/timers'
-import { killedAtMs } from '@/lib/board'
 import { TimerCell } from '@/components/TimerCell'
 import type { HuntFilter, SelectedCell } from '@/lib/view'
 import { matchesFilter } from '@/lib/view'
@@ -20,7 +19,7 @@ export function BossGrid({ board, serverId, now, filter, onSelect, onQuickKill }
     const cells = CHANNELS.map((channel) => {
       const key = timerKey(boss.id, serverId, channel)
       const record = board.timers[key]
-      const status = spawnSnapshot(killedAtMs(record), now).status
+      const status = spawnFromRecord(record, now).status
       return { channel, record, status }
     })
     const visible = cells.some((cell) => matchesFilter(cell.status, filter))

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type KeyboardEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -12,12 +12,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { BOSSES, SERVERS } from '@/lib/game'
 import type { SelectedCell } from '@/lib/view'
+import type { ReportKind } from '@/lib/board'
 
 type LogKillDialogProps = {
   open: boolean
   target: SelectedCell | null
   onOpenChange: (open: boolean) => void
-  onSave: (killedAt: Date) => void
+  onSave: (killedAt: Date, kind?: ReportKind) => void
   onClear: () => void
 }
 
@@ -34,17 +35,16 @@ function KillForm({
 }: {
   target: SelectedCell
   onOpenChange: (open: boolean) => void
-  onSave: (killedAt: Date) => void
+  onSave: (killedAt: Date, kind?: ReportKind) => void
   onClear: () => void
 }) {
-  const [minutesAgo, setMinutesAgo] = useState('5')
   const [clockTime, setClockTime] = useState(freshClockTime)
   const [error, setError] = useState<string | null>(null)
 
   const boss = BOSSES.find((item) => item.id === target.bossId)
   const server = SERVERS.find((item) => item.id === target.serverId)
 
-  function saveDate(date: Date | null) {
+  function saveDate(date: Date | null, kind: ReportKind = 'kill') {
     if (!date) {
       setError('Enter a valid kill time.')
       return
@@ -53,17 +53,8 @@ function KillForm({
       setError('That time is in the future. Tombstone times should already have happened.')
       return
     }
-    onSave(date)
+    onSave(date, kind)
     onOpenChange(false)
-  }
-
-  function applyMinutesAgo() {
-    const minutes = Number(minutesAgo)
-    if (!Number.isFinite(minutes) || minutes < 0) {
-      setError('Minutes ago must be zero or more.')
-      return
-    }
-    saveDate(new Date(Date.now() - minutes * 60_000))
   }
 
   function applyClockTime() {
@@ -86,33 +77,36 @@ function KillForm({
     saveDate(date)
   }
 
+  function onDialogKeyDown(event: KeyboardEvent) {
+    if (event.key !== 'Enter') return
+    event.preventDefault()
+    event.stopPropagation()
+    applyClockTime()
+  }
+
   return (
-    <>
+    <div onKeyDownCapture={onDialogKeyDown}>
       <DialogHeader>
         <DialogTitle>Log tombstone time</DialogTitle>
         <DialogDescription>
           {boss?.name} · {server?.full} · Channel {target.channel}. Enter the kill time shown on the
-          grave using this computer&apos;s clock.
+          grave, or mark the boss as scouted alive.
         </DialogDescription>
       </DialogHeader>
 
       <div className="space-y-4">
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" onClick={() => saveDate(new Date())}>
+          <Button type="button" size="sm" onClick={() => saveDate(new Date())}>
             Killed just now
           </Button>
-          <div className="flex items-center gap-2">
-            <Input
-              inputMode="numeric"
-              value={minutesAgo}
-              onChange={(event) => setMinutesAgo(event.target.value)}
-              className="w-16"
-              aria-label="Minutes ago"
-            />
-            <Button size="sm" variant="outline" onClick={applyMinutesAgo}>
-              Minutes ago
-            </Button>
-          </div>
+          <Button
+            type="button"
+            size="sm"
+            className="border-lime-400/40 bg-lime-600 text-white hover:bg-lime-500"
+            onClick={() => saveDate(new Date(), 'scout')}
+          >
+            Scouted just now
+          </Button>
         </div>
 
         <div className="space-y-2">
@@ -124,12 +118,13 @@ function KillForm({
               value={clockTime}
               onChange={(event) => setClockTime(event.target.value)}
             />
-            <Button variant="outline" onClick={applyClockTime}>
+            <Button type="button" variant="outline" onClick={applyClockTime}>
               Use this time
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            If that clock time has not happened yet today, it is treated as yesterday.
+            Press Enter to use this clock time. If it has not happened yet today, it is treated as
+            yesterday.
           </p>
         </div>
 
@@ -138,6 +133,7 @@ function KillForm({
 
       <DialogFooter className="sm:justify-between">
         <Button
+          type="button"
           variant="ghost"
           onClick={() => {
             onClear()
@@ -146,11 +142,11 @@ function KillForm({
         >
           Clear report
         </Button>
-        <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
           Cancel
         </Button>
       </DialogFooter>
-    </>
+    </div>
   )
 }
 

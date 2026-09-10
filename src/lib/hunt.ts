@@ -1,11 +1,11 @@
 import { parseTimerKey, STALE_OVERDUE_MS, type BossId, type ChannelId, type ServerId } from '@/lib/game'
-import { killedAtMs, type BoardDoc, type TimerRecord } from '@/lib/board'
-import { spawnSnapshot, type SpawnSnapshot } from '@/lib/timers'
+import { type BoardDoc, type TimerRecord } from '@/lib/board'
+import { spawnFromRecord, type SpawnSnapshot } from '@/lib/timers'
 
 /** Show a dead boss in Hunt now this long before the window opens. */
 export const HUNT_SOON_MS = 5 * 60 * 1000
 
-export const HUNT_PRIORITIES = ['overdue', 'window', 'soon'] as const
+export const HUNT_PRIORITIES = ['alive', 'overdue', 'window', 'soon'] as const
 export type HuntPriority = (typeof HUNT_PRIORITIES)[number]
 
 export type HuntRow = {
@@ -19,6 +19,7 @@ export type HuntRow = {
 }
 
 function huntPriority(snap: SpawnSnapshot): HuntPriority | null {
+  if (snap.status === 'alive') return 'alive'
   if (snap.status === 'window') return 'window'
   // Up? stays until the report has been overdue for 30 minutes, then it is stale.
   if (snap.status === 'overdue' && snap.msOverdue < STALE_OVERDUE_MS) return 'overdue'
@@ -29,6 +30,7 @@ function huntPriority(snap: SpawnSnapshot): HuntPriority | null {
 }
 
 function urgencyMs(row: HuntRow): number {
+  if (row.priority === 'alive') return row.snap.msAlive
   if (row.priority === 'overdue') return row.snap.msOverdue
   if (row.priority === 'window') return row.snap.msLeftInWindow
   return row.snap.msUntilWindow
@@ -39,7 +41,7 @@ export function listHuntNow(board: BoardDoc, now: number, serverId: ServerId): H
   for (const [key, record] of Object.entries(board.timers)) {
     const parsed = parseTimerKey(key)
     if (!parsed || parsed.serverId !== serverId) continue
-    const snap = spawnSnapshot(killedAtMs(record), now)
+    const snap = spawnFromRecord(record, now)
     const priority = huntPriority(snap)
     if (!priority) continue
     rows.push({

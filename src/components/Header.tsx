@@ -21,6 +21,7 @@ import { Link2, Loader2, Share2, Trash2, Upload } from 'lucide-react'
 
 const FILTERS: { id: HuntFilter; label: string }[] = [
   { id: 'all', label: 'All' },
+  { id: 'alive', label: 'Alive' },
   { id: 'window', label: 'Can spawn' },
   { id: 'overdue', label: 'Should be up' },
   { id: 'stale', label: 'Stale' },
