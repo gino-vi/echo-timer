@@ -164,7 +164,7 @@ export function Header({
               {syncState === 'connecting' && <Loader2 className="animate-spin" />}
               {syncState === 'local' && 'Local only'}
               {syncState === 'connecting' && 'Connecting'}
-              {syncState === 'live' && hunterCount > 0 && `Live · ${hunterCount + 1} hunters`}
+              {syncState === 'live' && hunterCount > 0 && `Live · ${hunterCount + 1} players`}
               {syncState === 'live' && hunterCount === 0 && 'Live board'}
               {syncState === 'error' && 'Sync issue'}
             </Badge>
