@@ -74,6 +74,23 @@ describe('listHuntNow', () => {
     expect(gone).toEqual([])
   })
 
+  it('includes a fresh scout as alive and drops it after 30 minutes', () => {
+    const board: BoardDoc = {
+      version: 1,
+      name: 'Test',
+      timers: {
+        'shinobi:na:1': {
+          killedAt: new Date(KILL).toISOString(),
+          updatedAt: new Date(KILL).toISOString(),
+          reportedBy: 'Ada',
+          kind: 'scout',
+        },
+      },
+    }
+    expect(listHuntNow(board, KILL + 60_000, 'na')[0]?.priority).toBe('alive')
+    expect(listHuntNow(board, KILL + STALE_OVERDUE_MS, 'na')).toEqual([])
+  })
+
   it('does not treat a window 6 minutes away as soon', () => {
     const now = KILL + EARLIEST_SPAWN_MS - 6 * 60_000
     const rows = listHuntNow(boardAt({ 'gunslinger:na:2': KILL }), now, 'na')

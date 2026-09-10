@@ -23,9 +23,11 @@ When a master dies it is down for **60 minutes**. After that it can spawn anywhe
 | 0:00 – 60:00 | Dead. Countdown to the spawn window. |
 | 60:01 – 90:00 | Spawn window. The boss can appear at any moment. |
 | 90:00 – 120:00 | Overdue. It should already be up. |
-| After 120:00 | Stale. Grey. The report has been overdue for 30 minutes. |
+| After 120:00 | Stale. Grey. The kill report has been overdue for 30 minutes. |
 
-Hunt now lists overdue bosses for **30 minutes**, open windows, and dead bosses whose window opens in **5 minutes or less**. Open windows count **up** from 0:01 for how long they have been available; the grid still shows time until the guaranteed spawn. After 30 minutes overdue, the report turns Stale on the grid and leaves Hunt now.
+**Scouted just now** marks the boss **Alive** (seen up). Alive stays in Hunt now for **30 minutes**, then turns Stale. Stale scouts show **Scouted** instead of **Died**.
+
+Hunt now lists alive scouts, overdue bosses for **30 minutes**, open windows, and dead bosses whose window opens in **5 minutes or less**. Open windows count **up** from 0:01 for how long they have been available; the grid still shows time until the guaranteed spawn. After 30 minutes overdue or 30 minutes after a scout, the report turns Stale on the grid and leaves Hunt now.
 
 Kill times are saved as UTC and shown in each player's local timezone. That is why a player in NA and a player in SEA can look at the same board and still see times that match their own PCs.
 

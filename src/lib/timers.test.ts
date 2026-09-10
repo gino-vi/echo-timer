@@ -46,6 +46,17 @@ describe('spawnSnapshot', () => {
     const stale = spawnSnapshot(KILL, KILL + LATEST_SPAWN_MS + STALE_OVERDUE_MS)
     expect(stale.status).toBe('stale')
   })
+
+  it('marks a scout as alive until 30 minutes pass', () => {
+    const fresh = spawnSnapshot(KILL, KILL + 60_000, 'scout')
+    expect(fresh.status).toBe('alive')
+    expect(fresh.msAlive).toBe(60_000)
+    const stillAlive = spawnSnapshot(KILL, KILL + STALE_OVERDUE_MS - 1, 'scout')
+    expect(stillAlive.status).toBe('alive')
+    const staleScout = spawnSnapshot(KILL, KILL + STALE_OVERDUE_MS, 'scout')
+    expect(staleScout.status).toBe('stale')
+    expect(staleScout.kind).toBe('scout')
+  })
 })
 
 describe('formatDuration', () => {

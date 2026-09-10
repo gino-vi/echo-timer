@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
-import { formatDuration, spawnSnapshot } from '@/lib/timers'
+import { formatDuration, formatElapsed, spawnFromRecord } from '@/lib/timers'
 import { formatTime } from '@/lib/format'
-import { killedAtMs, type TimerRecord } from '@/lib/board'
+import { reportKind, type TimerRecord } from '@/lib/board'
 import type { ChannelId } from '@/lib/game'
 import { STATUS_STYLES } from '@/lib/statusStyles'
 
@@ -15,7 +15,8 @@ type TimerCellProps = {
 }
 
 export function TimerCell({ channel, record, now, onClick, onQuickKill, compact }: TimerCellProps) {
-  const snap = spawnSnapshot(killedAtMs(record), now)
+  const snap = spawnFromRecord(record, now)
+  const scouted = reportKind(record) === 'scout'
   const headline =
     snap.status === 'unknown'
       ? 'No report'
@@ -25,12 +26,16 @@ export function TimerCell({ channel, record, now, onClick, onQuickKill, compact 
           ? 'Can spawn'
           : snap.status === 'overdue'
             ? 'Should be up'
-            : 'Stale report'
+            : snap.status === 'alive'
+              ? 'Alive'
+              : 'Stale report'
 
   const flavor =
     snap.status === 'window'
       ? `${formatDuration(snap.msLeftInWindow)} until guaranteed spawn`
-      : null
+      : snap.status === 'alive'
+        ? `Scouted ${formatElapsed(snap.msAlive)}`
+        : null
 
   return (
     <button
@@ -54,7 +59,7 @@ export function TimerCell({ channel, record, now, onClick, onQuickKill, compact 
       {flavor ? <span className="text-xs opacity-90">{flavor}</span> : null}
       {snap.killedAt ? (
         <span className="text-xs opacity-80">
-          Died {formatTime(snap.killedAt)}
+          {scouted ? 'Scouted' : 'Died'} {formatTime(snap.killedAt)}
           {record?.reportedBy ? ` · ${record.reportedBy}` : ''}
         </span>
       ) : (

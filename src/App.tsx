@@ -89,13 +89,15 @@ export default function App() {
         onOpenChange={(open) => {
           if (!open) setSelected(null)
         }}
-        onSave={(killedAt) => {
+        onSave={(killedAt, kind = 'kill') => {
           if (!selected) return
           boardState.reportKill(
             timerKey(selected.bossId, selected.serverId, selected.channel),
             killedAt,
+            boardState.playerName,
+            kind,
           )
-          toast.success('Tombstone time saved')
+          toast.success(kind === 'scout' ? 'Scouted as alive' : 'Tombstone time saved')
         }}
         onClear={() => {
           if (!selected) return

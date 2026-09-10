@@ -12,6 +12,7 @@ import {
   type LivePayload,
   type Room,
   type TimerRecord,
+  type ReportKind,
 } from '@/lib/board'
 import type { TimerKey } from '@/lib/game'
 import {
@@ -213,11 +214,12 @@ export function useBoard() {
   }, [])
 
   const reportKill = useCallback(
-    (key: TimerKey, killedAt: Date, reporter = playerName) => {
+    (key: TimerKey, killedAt: Date, reporter = playerName, kind: ReportKind = 'kill') => {
       const record: TimerRecord = {
         killedAt: killedAt.toISOString(),
         updatedAt: new Date().toISOString(),
         reportedBy: reporter.trim() || 'Anonymous',
+        kind: kind === 'scout' ? 'scout' : 'kill',
       }
       const next = setTimer(boardRef.current, key, record)
       boardRef.current = next
@@ -234,6 +236,7 @@ export function useBoard() {
         killedAt: null,
         updatedAt: new Date().toISOString(),
         reportedBy: reporter.trim() || 'Anonymous',
+        kind: 'kill',
       }
       const next = setTimer(boardRef.current, key, record)
       boardRef.current = next

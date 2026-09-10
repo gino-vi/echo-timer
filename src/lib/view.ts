@@ -1,6 +1,6 @@
 import { BOSSES, CHANNELS, SERVERS, timerKey, type BossId, type ChannelId, type ServerId } from '@/lib/game'
-import { killedAtMs, type BoardDoc } from '@/lib/board'
-import { spawnSnapshot, type TimerStatus } from '@/lib/timers'
+import { type BoardDoc } from '@/lib/board'
+import { spawnFromRecord, type TimerStatus } from '@/lib/timers'
 
 export type HuntFilter = 'all' | TimerStatus
 
@@ -10,6 +10,7 @@ export function countStatuses(board: BoardDoc, now: number, serverId?: ServerId)
     dead: 0,
     window: 0,
     overdue: 0,
+    alive: 0,
     stale: 0,
   }
   for (const boss of BOSSES) {
@@ -17,7 +18,7 @@ export function countStatuses(board: BoardDoc, now: number, serverId?: ServerId)
       if (serverId && server.id !== serverId) continue
       for (const channel of CHANNELS) {
         const record = board.timers[timerKey(boss.id, server.id, channel)]
-        counts[spawnSnapshot(killedAtMs(record), now).status] += 1
+        counts[spawnFromRecord(record, now).status] += 1
       }
     }
   }

@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { BOSSES, SERVERS, type ServerId } from '@/lib/game'
-import type { BoardDoc } from '@/lib/board'
+import { reportKind, type BoardDoc } from '@/lib/board'
 import { formatDuration, formatElapsed } from '@/lib/timers'
 import { formatTime } from '@/lib/format'
 import { listHuntNow, type HuntPriority } from '@/lib/hunt'
@@ -17,6 +17,7 @@ type HuntStripProps = {
 }
 
 const PRIORITY_LABEL: Record<HuntPriority, string> = {
+  alive: 'Alive',
   overdue: 'Up?',
   window: 'Window',
   soon: 'Soon',
@@ -32,8 +33,8 @@ export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntS
         <div>
           <h2 className="font-heading text-sm font-medium">Hunt now</h2>
           <p className="text-xs text-muted-foreground">
-            {currentServer} only: should-be-up for 30 minutes, open windows, and windows opening in
-            the next 5 minutes.
+            {currentServer} only: alive scouts, should-be-up for 30 minutes, open windows, and
+            windows opening in the next 5 minutes. Stale reports stay on the grid, not here.
           </p>
         </div>
         <Badge variant="outline">{actionable.length} ready</Badge>
@@ -82,14 +83,18 @@ export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntS
                 </span>
                 <span className="text-xs opacity-80">
                   CH{row.channel}
-                  {row.snap.killedAt ? ` · died ${formatTime(row.snap.killedAt)}` : ''}
+                  {row.snap.killedAt
+                    ? ` · ${reportKind(row.record) === 'scout' ? 'scouted' : 'died'} ${formatTime(row.snap.killedAt)}`
+                    : ''}
                 </span>
                 <span className="text-xs tabular-nums">
-                  {row.priority === 'overdue'
-                    ? `Overdue ${formatDuration(row.snap.msOverdue)}`
-                    : row.priority === 'window'
-                      ? `Open for ${formatElapsed(row.snap.msWindowOpen)}`
-                      : `Window in ${formatDuration(row.snap.msUntilWindow)}`}
+                  {row.priority === 'alive'
+                    ? `Alive ${formatElapsed(row.snap.msAlive)}`
+                    : row.priority === 'overdue'
+                      ? `Overdue ${formatDuration(row.snap.msOverdue)}`
+                      : row.priority === 'window'
+                        ? `Open ${formatElapsed(row.snap.msWindowOpen)}`
+                        : `Window in ${formatDuration(row.snap.msUntilWindow)}`}
                 </span>
               </button>
             )

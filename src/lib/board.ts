@@ -1,9 +1,18 @@
 import type { TimerKey } from '@/lib/game'
 
+export const REPORT_KINDS = ['kill', 'scout'] as const
+export type ReportKind = (typeof REPORT_KINDS)[number]
+
 export type TimerRecord = {
   killedAt: string | null
   updatedAt: string
   reportedBy: string
+  /** Missing kind is treated as a kill for older board JSON. */
+  kind?: ReportKind
+}
+
+export function reportKind(record: TimerRecord | undefined): ReportKind {
+  return record?.kind === 'scout' ? 'scout' : 'kill'
 }
 
 export type BoardDoc = {
@@ -94,6 +103,7 @@ export function clearAllTimers(board: BoardDoc, reportedBy: string): BoardDoc {
       killedAt: null,
       updatedAt,
       reportedBy: reporter,
+      kind: 'kill',
     }
   }
   return { ...board, timers }
