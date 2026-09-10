@@ -1,17 +1,21 @@
 import { joinRoom } from 'trystero'
 import type { BoardDoc, LivePayload } from '@/lib/board'
+import type { RemoteHunter } from '@/lib/hunters'
 
 const APP_ID = 'spiritvale-boss-board'
 
 export type LiveChannel = {
   send: (payload: LivePayload) => void
+  setName: (name: string) => void
   leave: () => void
 }
 
 type LiveHandlers = {
   getBoard: () => BoardDoc
+  getName: () => string
   onMessage: (payload: LivePayload) => void
   onPeers: (count: number) => void
+  onHunters: (hunters: RemoteHunter[]) => void
 }
 
 function isLivePayload(value: unknown): value is LivePayload {
@@ -28,37 +32,56 @@ export function connectLiveRoom(roomId: string, handlers: LiveHandlers): LiveCha
     }
   }
 
-  const peers = new Set<string>()
-  const emitPeers = () => handlers.onPeers(peers.size)
+  const names = new Map<string, string>()
+  const emitPeers = () => handlers.onPeers(names.size)
+  const emitHunters = () => {
+    handlers.onHunters(
+      [...names.entries()].map(([id, name]) => ({ id, name })),
+    )
+  }
 
+  let localName = handlers.getName()
   let sendRtc: ((payload: LivePayload, target?: string) => void) | null = null
+  let sendName: ((name: string, target?: string) => void) | null = null
   let leaveRtc: (() => void) | null = null
 
   try {
     const room = joinRoom({ appId: APP_ID }, roomId)
-    const action = room.makeAction<LivePayload>('board')
+    const boardAction = room.makeAction<LivePayload>('board')
+    const nameAction = room.makeAction<string>('name')
     sendRtc = (payload, target) => {
-      void action.send(payload, target ? { target } : undefined)
+      void boardAction.send(payload, target ? { target } : undefined)
     }
-    action.onMessage = (payload) => {
+    sendName = (name, target) => {
+      void nameAction.send(name, target ? { target } : undefined)
+    }
+    boardAction.onMessage = (payload) => {
       if (isLivePayload(payload)) {
         handlers.onMessage(payload)
       }
     }
+    nameAction.onMessage = (value, { peerId }) => {
+      names.set(peerId, typeof value === 'string' ? value : '')
+      emitHunters()
+    }
     room.onPeerJoin = (peerId) => {
-      peers.add(peerId)
+      names.set(peerId, names.get(peerId) ?? '')
       emitPeers()
+      emitHunters()
       sendRtc?.({ type: 'snapshot', board: handlers.getBoard() }, peerId)
+      sendName?.(localName, peerId)
     }
     room.onPeerLeave = (peerId) => {
-      peers.delete(peerId)
+      names.delete(peerId)
       emitPeers()
+      emitHunters()
     }
     leaveRtc = () => {
       void room.leave()
     }
   } catch {
     sendRtc = null
+    sendName = null
   }
 
   return {
@@ -66,11 +89,16 @@ export function connectLiveRoom(roomId: string, handlers: LiveHandlers): LiveCha
       channel.postMessage(payload)
       sendRtc?.(payload)
     },
+    setName(name) {
+      localName = name
+      sendName?.(name)
+    },
     leave() {
       channel.close()
       leaveRtc?.()
-      peers.clear()
+      names.clear()
       emitPeers()
+      emitHunters()
     },
   }
 }

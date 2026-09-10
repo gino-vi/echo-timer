@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Badge } from '@/components/ui/badge'
+import { Badge, badgeVariants } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -15,6 +15,8 @@ import type { HuntFilter } from '@/lib/view'
 import { SERVERS, type ServerId } from '@/lib/game'
 import { formatClock, timezoneLabel } from '@/lib/format'
 import type { SyncState } from '@/hooks/useBoard'
+import { listConnectedHunters, type RemoteHunter } from '@/lib/hunters'
+import { cn } from '@/lib/utils'
 import { Link2, Loader2, Share2, Trash2, Upload } from 'lucide-react'
 
 const FILTERS: { id: HuntFilter; label: string }[] = [
@@ -38,6 +40,7 @@ type HeaderProps = {
   syncState: SyncState
   syncError: string | null
   hunterCount: number
+  remoteHunters: RemoteHunter[]
   partyUrl: string | null
   onCreateBoard: () => Promise<string>
   onImport: (text: string) => void
@@ -58,6 +61,7 @@ export function Header({
   syncState,
   syncError,
   hunterCount,
+  remoteHunters,
   partyUrl,
   onCreateBoard,
   onImport,
@@ -66,6 +70,7 @@ export function Header({
   exportPayload,
 }: HeaderProps) {
   const [shareOpen, setShareOpen] = useState(false)
+  const [huntersOpen, setHuntersOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [importText, setImportText] = useState('')
   const [confirmClear, setConfirmClear] = useState(false)
@@ -75,6 +80,8 @@ export function Header({
     const id = window.setTimeout(() => setConfirmClear(false), 4000)
     return () => window.clearTimeout(id)
   }, [confirmClear])
+
+  const hunters = listConnectedHunters(playerName, remoteHunters)
 
   async function copyPartyLink() {
     try {
@@ -160,14 +167,24 @@ export function Header({
 
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={syncState === 'live' ? 'default' : 'outline'}>
-              {syncState === 'connecting' && <Loader2 className="animate-spin" />}
-              {syncState === 'local' && 'Local only'}
-              {syncState === 'connecting' && 'Connecting'}
-              {syncState === 'live' && hunterCount > 0 && `Live · ${hunterCount + 1} players`}
-              {syncState === 'live' && hunterCount === 0 && 'Live board'}
-              {syncState === 'error' && 'Sync issue'}
-            </Badge>
+            {syncState === 'live' ? (
+              <button
+                type="button"
+                className={cn(badgeVariants({ variant: 'default' }), 'cursor-pointer')}
+                onClick={() => setHuntersOpen(true)}
+                aria-haspopup="dialog"
+                aria-expanded={huntersOpen}
+              >
+                {hunterCount > 0 ? `Live · ${hunterCount + 1} hunters` : 'Live board'}
+              </button>
+            ) : (
+              <Badge variant="outline">
+                {syncState === 'connecting' && <Loader2 className="animate-spin" />}
+                {syncState === 'local' && 'Local only'}
+                {syncState === 'connecting' && 'Connecting'}
+                {syncState === 'error' && 'Sync issue'}
+              </Badge>
+            )}
             {syncError ? (
               <p className="text-xs text-destructive">{syncError}</p>
             ) : syncState === 'local' ? (
@@ -176,7 +193,7 @@ export function Header({
               </p>
             ) : hunterCount > 0 ? (
               <p className="text-xs text-muted-foreground">
-                Connected players see new tombstones immediately.
+                Click Live to see who is connected. New tombstones show up immediately.
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
@@ -215,6 +232,36 @@ export function Header({
           </div>
         </div>
       </div>
+
+      <Dialog open={huntersOpen} onOpenChange={setHuntersOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Characters on this board</DialogTitle>
+            <DialogDescription>
+              Everyone currently connected to this party link.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="max-h-72 space-y-1 overflow-y-auto">
+            {hunters.map((hunter) => (
+              <li
+                key={hunter.id}
+                className="flex items-baseline justify-between gap-3 rounded-lg px-2 py-1.5"
+              >
+                {hunter.anonymous ? (
+                  <em className="text-sm italic [font-style:oblique_10deg] font-normal">
+                    Anonymous
+                  </em>
+                ) : (
+                  <span className="text-sm font-medium">{hunter.label}</span>
+                )}
+                {hunter.isSelf ? (
+                  <span className="text-xs text-muted-foreground">you</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
         <DialogContent className="sm:max-w-lg">
