@@ -27,6 +27,7 @@ import {
 import { connectLiveRoom, type LiveChannel } from '@/lib/liveSync'
 import { claimNamespace, fetchBoard, saveBoard } from '@/lib/remoteStore'
 import { isServerId, type ServerId } from '@/lib/game'
+import type { RemoteHunter } from '@/lib/hunters'
 
 export type SyncState = 'local' | 'connecting' | 'live' | 'error'
 
@@ -57,6 +58,7 @@ export function useBoard() {
   )
   const [syncError, setSyncError] = useState<string | null>(null)
   const [hunterCount, setHunterCount] = useState(0)
+  const [remoteHunters, setRemoteHunters] = useState<RemoteHunter[]>([])
   const [playerName, setPlayerNameState] = useState(() => loadPlayerName())
   const [serverId, setServerIdState] = useState<ServerId>(() => {
     const saved = loadServerId()
@@ -67,7 +69,13 @@ export function useBoard() {
   const roomRef = useRef(room)
   const liveRef = useRef<LiveChannel | null>(null)
   const hunterCountRef = useRef(0)
+  const playerNameRef = useRef(playerName)
   const writeChain = useRef(Promise.resolve())
+
+  useEffect(() => {
+    playerNameRef.current = playerName
+    liveRef.current?.setName(playerName)
+  }, [playerName])
 
   useEffect(() => {
     boardRef.current = board
@@ -144,17 +152,20 @@ export function useBoard() {
     if (!room) {
       setHunterCount(0)
       hunterCountRef.current = 0
+      setRemoteHunters([])
       liveRef.current = null
       return
     }
 
     const channel = connectLiveRoom(room.ns, {
       getBoard: () => boardRef.current,
+      getName: () => playerNameRef.current,
       onMessage: applyIncoming,
       onPeers: (count) => {
         hunterCountRef.current = count
         setHunterCount(count)
       },
+      onHunters: setRemoteHunters,
     })
     liveRef.current = channel
     return () => {
@@ -291,6 +302,7 @@ export function useBoard() {
     syncState,
     syncError,
     hunterCount,
+    remoteHunters,
     playerName,
     serverId,
     partyUrl,

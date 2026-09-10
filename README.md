@@ -66,7 +66,7 @@ npm run preview
 1. Open the site and set **Your hunter name**.
 2. Click a boss channel and enter the tombstone time, or **right-click** the cell to log it as killed now. In the dialog, use **Killed just now**, **Minutes ago**, or the **clock time on the tombstone**.
 3. Click **Share board** and copy the party link into Discord.
-4. Everyone else opens **that same link** and leaves it open. New kills are pushed to the party immediately. Player 2 logging Asia and Player 3 logging NA will both appear on every open board.
+4. Everyone else opens **that same link** and leaves it open. New kills are pushed to the party immediately. Click **Live** to see who is connected; hunters with no name show as *Anonymous*.
 
 JSON export/import is a backup only. Importing a file does **not** subscribe you to later reports.
 

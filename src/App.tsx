@@ -46,6 +46,7 @@ export default function App() {
         syncState={boardState.syncState}
         syncError={boardState.syncError}
         hunterCount={boardState.hunterCount}
+        remoteHunters={boardState.remoteHunters}
         partyUrl={boardState.partyUrl}
         onCreateBoard={boardState.createSharedBoard}
         onImport={handleImport}
