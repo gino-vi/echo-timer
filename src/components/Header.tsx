@@ -248,7 +248,9 @@ export function Header({
                 className="flex items-baseline justify-between gap-3 rounded-lg px-2 py-1.5"
               >
                 {hunter.anonymous ? (
-                  <em className="text-sm">Anonymous</em>
+                  <em className="text-sm italic [font-style:oblique_10deg] font-normal">
+                    Anonymous
+                  </em>
                 ) : (
                   <span className="text-sm font-medium">{hunter.label}</span>
                 )}
