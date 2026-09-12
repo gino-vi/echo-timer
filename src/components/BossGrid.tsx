@@ -21,9 +21,13 @@ function ContestedButton({ on, onToggle }: { on: boolean; onToggle: () => void }
     <button
       type="button"
       aria-pressed={on}
-      onClick={onToggle}
+      onClick={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        onToggle()
+      }}
       className={cn(
-        'rounded-md border px-2 py-0.5 text-[10px] font-medium tracking-wide transition-colors',
+        'inline-flex h-7 shrink-0 cursor-pointer items-center rounded-md border px-2.5 text-[11px] font-medium tracking-wide select-none transition-colors',
         on
           ? 'border-red-500 bg-red-600 text-white'
           : 'border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -87,7 +91,7 @@ export function BossGrid({
                 Master
               </div>
               {channelHeaders.map(({ channel, on }) => (
-                <div key={channel} className="flex items-center justify-between gap-2 px-1 py-2">
+                <div key={channel} className="flex items-center gap-2 px-1 py-2">
                   <span className="text-xs tracking-wide text-muted-foreground uppercase">
                     Channel {channel}
                   </span>
