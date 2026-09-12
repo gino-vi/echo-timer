@@ -48,6 +48,31 @@ describe('mergeBoards', () => {
     expect(merged.timers['wizard:na:2']?.reportedBy).toBe('Ada')
     expect(merged.timers['priest:eu:3']?.killedAt).toBeNull()
   })
+
+  it('keeps the newest contested flag per channel', () => {
+    const local: BoardDoc = {
+      version: 1,
+      name: 'A',
+      timers: {},
+      contested: {
+        'na:1': { on: true, updatedAt: '2026-09-09T01:00:00.000Z', reportedBy: 'Ada' },
+        'na:2': { on: true, updatedAt: '2026-09-09T01:00:00.000Z', reportedBy: 'Ada' },
+      },
+    }
+    const remote: BoardDoc = {
+      version: 1,
+      name: 'B',
+      timers: {},
+      contested: {
+        'na:1': { on: false, updatedAt: '2026-09-09T01:10:00.000Z', reportedBy: 'Ben' },
+        'eu:3': { on: true, updatedAt: '2026-09-09T01:00:00.000Z', reportedBy: 'Ben' },
+      },
+    }
+    const merged = mergeBoards(local, remote)
+    expect(merged.contested?.['na:1']?.on).toBe(false)
+    expect(merged.contested?.['na:2']?.on).toBe(true)
+    expect(merged.contested?.['eu:3']?.on).toBe(true)
+  })
 })
 
 describe('clearAllTimers', () => {
@@ -128,6 +153,41 @@ describe('applyLivePayload', () => {
       },
     })
     expect(next.timers['wizard:na:2']?.reportedBy).toBe('Ben')
+  })
+
+  it('applies a newer contested patch', () => {
+    const board: BoardDoc = {
+      version: 1,
+      name: 'A',
+      timers: {},
+      contested: {
+        'na:1': { on: false, updatedAt: '2026-09-09T01:00:00.000Z', reportedBy: 'Ada' },
+      },
+    }
+    const next = applyLivePayload(board, {
+      type: 'contested',
+      key: 'na:1',
+      record: { on: true, updatedAt: '2026-09-09T01:02:00.000Z', reportedBy: 'Ben' },
+    })
+    expect(next.contested?.['na:1']?.on).toBe(true)
+    expect(next.contested?.['na:1']?.reportedBy).toBe('Ben')
+  })
+
+  it('ignores an older contested patch', () => {
+    const board: BoardDoc = {
+      version: 1,
+      name: 'A',
+      timers: {},
+      contested: {
+        'na:1': { on: true, updatedAt: '2026-09-09T01:10:00.000Z', reportedBy: 'Ben' },
+      },
+    }
+    const next = applyLivePayload(board, {
+      type: 'contested',
+      key: 'na:1',
+      record: { on: false, updatedAt: '2026-09-09T01:00:00.000Z', reportedBy: 'Ada' },
+    })
+    expect(next.contested?.['na:1']?.on).toBe(true)
   })
 })
 

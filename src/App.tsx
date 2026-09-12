@@ -79,6 +79,9 @@ export default function App() {
             filter={filter}
             onSelect={setSelected}
             onQuickKill={logKilledNow}
+            onToggleContested={(channel) =>
+              boardState.toggleContested(boardState.serverId, channel)
+            }
           />
         </section>
       </main>

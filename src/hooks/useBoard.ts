@@ -2,19 +2,24 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   applyLivePayload,
   clearAllTimers,
+  contestedKey,
   decodeRoom,
   encodeRoom,
   hasKillReports,
   mergeBoards,
   randomNamespace,
+  setContested,
   setTimer,
   type BoardDoc,
+  type ContestedRecord,
   type LivePayload,
   type Room,
   type TimerRecord,
   type ReportKind,
 } from '@/lib/board'
-import type { TimerKey } from '@/lib/game'
+import { isServerId, type ChannelId, type ServerId, type TimerKey } from '@/lib/game'
+import { staleContestedUpdates } from '@/lib/contested'
+import { useNow } from '@/hooks/useNow'
 import {
   loadLocalBoard,
   loadLocalRoom,
@@ -27,7 +32,6 @@ import {
 } from '@/lib/localStore'
 import { connectLiveRoom, type LiveChannel } from '@/lib/liveSync'
 import { claimNamespace, fetchBoard, saveBoard } from '@/lib/remoteStore'
-import { isServerId, type ServerId } from '@/lib/game'
 import type { RemoteHunter } from '@/lib/hunters'
 
 export type SyncState = 'local' | 'connecting' | 'live' | 'error'
@@ -72,6 +76,7 @@ export function useBoard() {
   const hunterCountRef = useRef(0)
   const playerNameRef = useRef(playerName)
   const writeChain = useRef(Promise.resolve())
+  const nowMs = useNow(1000)
 
   useEffect(() => {
     playerNameRef.current = playerName
@@ -136,7 +141,10 @@ export function useBoard() {
         return
       }
       const merged = mergeBoards(boardRef.current, remote)
-      const changed = JSON.stringify(merged.timers) !== JSON.stringify(boardRef.current.timers)
+      const changed =
+        JSON.stringify(merged.timers) !== JSON.stringify(boardRef.current.timers) ||
+        JSON.stringify(merged.contested ?? {}) !==
+          JSON.stringify(boardRef.current.contested ?? {})
       if (changed) {
         boardRef.current = merged
         setBoard(merged)
@@ -212,6 +220,37 @@ export function useBoard() {
     setServerIdState(id)
     saveServerId(id)
   }, [])
+
+  useEffect(() => {
+    const updates = staleContestedUpdates(boardRef.current, nowMs)
+    if (updates.length === 0) return
+    let next = boardRef.current
+    for (const { key, record } of updates) {
+      next = setContested(next, key, record)
+      broadcast({ type: 'contested', key, record })
+    }
+    boardRef.current = next
+    setBoard(next)
+    enqueuePush(next)
+  }, [nowMs, broadcast, enqueuePush])
+
+  const toggleContested = useCallback(
+    (serverId: ServerId, channel: ChannelId, reporter = playerName) => {
+      const key = contestedKey(serverId, channel)
+      const existing = boardRef.current.contested?.[key]
+      const record: ContestedRecord = {
+        on: !existing?.on,
+        updatedAt: new Date().toISOString(),
+        reportedBy: reporter.trim() || 'Anonymous',
+      }
+      const next = setContested(boardRef.current, key, record)
+      boardRef.current = next
+      setBoard(next)
+      broadcast({ type: 'contested', key, record })
+      enqueuePush(next)
+    },
+    [broadcast, enqueuePush, playerName],
+  )
 
   const reportKill = useCallback(
     (key: TimerKey, killedAt: Date, reporter = playerName, kind: ReportKind = 'kill') => {
@@ -312,6 +351,7 @@ export function useBoard() {
     updatePlayerName,
     updateServerId,
     reportKill,
+    toggleContested,
     clearTimer,
     clearAllTimers: clearAllTimersOnBoard,
     createSharedBoard,

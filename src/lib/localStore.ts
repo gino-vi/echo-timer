@@ -4,6 +4,7 @@ const BOARD_KEY = 'svb:board'
 const ROOM_KEY = 'svb:room'
 const NAME_KEY = 'svb:player-name'
 const SERVER_KEY = 'svb:server'
+const CLOCK_KEY = 'svb:last-clock'
 
 export function loadLocalBoard(): BoardDoc {
   try {
@@ -57,4 +58,21 @@ export function loadServerId(): string | null {
 
 export function saveServerId(id: string) {
   localStorage.setItem(SERVER_KEY, id)
+}
+
+export function loadLastClockInput(): string {
+  try {
+    return localStorage.getItem(CLOCK_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+export function saveLastClockInput(value: string) {
+  if (!value) return
+  try {
+    localStorage.setItem(CLOCK_KEY, value)
+  } catch {
+    // Ignore quota / private-mode failures; in-memory fallback still works.
+  }
 }

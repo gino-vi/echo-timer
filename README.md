@@ -66,7 +66,7 @@ npm run preview
 ## Use it with your party
 
 1. Open the site and set **Your hunter name**.
-2. Click a boss channel and enter the tombstone time, or **right-click** the cell to log it as killed now. In the dialog, use **Killed just now**, **Scouted just now**, or the **clock time on the tombstone**. Reopening a cell keeps the last time you entered.
+2. Click a boss channel and enter the tombstone time, or **right-click** the cell to log it as killed now. In the dialog, use **Killed just now**, **Scouted just now**, or the **clock time on the tombstone**. The clock field keeps the last time you typed even if you cancel or log killed/scouted now. Each channel header has a **Contested** toggle shared with the party.
 3. Click **Share board** and copy the party link into Discord.
 4. Everyone else opens **that same link** and leaves it open. New kills are pushed to the party immediately. Click **Live** to see who is connected; hunters with no name show as *Anonymous*.
 

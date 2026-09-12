@@ -21,7 +21,7 @@ type LiveHandlers = {
 function isLivePayload(value: unknown): value is LivePayload {
   if (!value || typeof value !== 'object') return false
   const payload = value as LivePayload
-  return payload.type === 'patch' || payload.type === 'snapshot'
+  return payload.type === 'patch' || payload.type === 'contested' || payload.type === 'snapshot'
 }
 
 export function connectLiveRoom(roomId: string, handlers: LiveHandlers): LiveChannel {
