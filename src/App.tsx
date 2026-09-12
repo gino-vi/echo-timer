@@ -8,7 +8,7 @@ import { useBoard } from '@/hooks/useBoard'
 import { useNow } from '@/hooks/useNow'
 import { timerKey } from '@/lib/game'
 import { countStatuses, type HuntFilter, type SelectedCell } from '@/lib/view'
-import type { BoardDoc } from '@/lib/board'
+import { killedAtMs, type BoardDoc } from '@/lib/board'
 
 export default function App() {
   const nowMs = useNow(1000)
@@ -86,6 +86,15 @@ export default function App() {
       <LogKillDialog
         open={selected != null}
         target={selected}
+        existingAt={
+          selected
+            ? killedAtMs(
+                boardState.board.timers[
+                  timerKey(selected.bossId, selected.serverId, selected.channel)
+                ],
+              )
+            : null
+        }
         onOpenChange={(open) => {
           if (!open) setSelected(null)
         }}

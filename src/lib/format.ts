@@ -20,3 +20,9 @@ export function formatTime(value: number): string {
     minute: '2-digit',
   }).format(new Date(value))
 }
+
+/** `HH:MM` for `<input type="time">`, using the local clock. */
+export function formatTimeInput(value: number | Date = new Date()): string {
+  const date = value instanceof Date ? value : new Date(value)
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}

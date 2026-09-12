@@ -13,32 +13,39 @@ import { Label } from '@/components/ui/label'
 import { BOSSES, SERVERS } from '@/lib/game'
 import type { SelectedCell } from '@/lib/view'
 import type { ReportKind } from '@/lib/board'
+import { formatTimeInput } from '@/lib/format'
+
+let lastClockInput = ''
+
+function initialClockTime(existingAt: number | null): string {
+  if (existingAt != null) return formatTimeInput(existingAt)
+  if (lastClockInput) return lastClockInput
+  return formatTimeInput()
+}
 
 type LogKillDialogProps = {
   open: boolean
   target: SelectedCell | null
+  existingAt: number | null
   onOpenChange: (open: boolean) => void
   onSave: (killedAt: Date, kind?: ReportKind) => void
   onClear: () => void
 }
 
-function freshClockTime() {
-  const current = new Date()
-  return `${String(current.getHours()).padStart(2, '0')}:${String(current.getMinutes()).padStart(2, '0')}`
-}
-
 function KillForm({
   target,
+  existingAt,
   onOpenChange,
   onSave,
   onClear,
 }: {
   target: SelectedCell
+  existingAt: number | null
   onOpenChange: (open: boolean) => void
   onSave: (killedAt: Date, kind?: ReportKind) => void
   onClear: () => void
 }) {
-  const [clockTime, setClockTime] = useState(freshClockTime)
+  const [clockTime, setClockTime] = useState(() => initialClockTime(existingAt))
   const [error, setError] = useState<string | null>(null)
 
   const boss = BOSSES.find((item) => item.id === target.bossId)
@@ -74,6 +81,7 @@ function KillForm({
     if (date.getTime() > Date.now() + 60_000) {
       date.setDate(date.getDate() - 1)
     }
+    lastClockInput = clockTime
     saveDate(date)
   }
 
@@ -116,15 +124,17 @@ function KillForm({
               id="tombstone-clock"
               type="time"
               value={clockTime}
-              onChange={(event) => setClockTime(event.target.value)}
+              onChange={(event) => {
+                lastClockInput = event.target.value
+                setClockTime(event.target.value)
+              }}
             />
             <Button type="button" variant="outline" onClick={applyClockTime}>
               Use this time
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Press Enter to use this clock time. If it has not happened yet today, it is treated as
-            yesterday.
+            If that clock time has not happened yet today, it is treated as yesterday.
           </p>
         </div>
 
@@ -153,12 +163,13 @@ function KillForm({
 export function LogKillDialog({
   open,
   target,
+  existingAt,
   onOpenChange,
   onSave,
   onClear,
 }: LogKillDialogProps) {
   const formKey = target
-    ? `${target.bossId}:${target.serverId}:${target.channel}:${String(open)}`
+    ? `${target.bossId}:${target.serverId}:${target.channel}:${String(open)}:${existingAt ?? 'new'}`
     : 'none'
 
   return (
@@ -168,6 +179,7 @@ export function LogKillDialog({
           <KillForm
             key={formKey}
             target={target}
+            existingAt={existingAt}
             onOpenChange={onOpenChange}
             onSave={onSave}
             onClear={onClear}
