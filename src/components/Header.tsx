@@ -116,20 +116,87 @@ export function Header({
     <header className="border-b border-border/80 bg-[linear-gradient(180deg,oklch(0.21_0.03_260),oklch(0.17_0.025_260))]">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-medium tracking-[0.22em] text-primary/80 uppercase">
-              SpiritVale
-            </p>
-            <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
-              Echo Master Boss Board
-            </h1>
-            <p className="max-w-xl text-sm text-muted-foreground">
-              Shared timers for the seven class masters across every server and channel.
-              All countdowns use this computer&apos;s clock.
-            </p>
+          <div className="min-w-0 flex-1 space-y-3">
+            <div className="space-y-1">
+              <p className="text-xs font-medium tracking-[0.22em] text-primary/80 uppercase">
+                SpiritVale
+              </p>
+              <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+                Echo Master Boss Board
+              </h1>
+              <p className="max-w-xl text-sm text-muted-foreground">
+                Shared timers for the seven class masters across every server and channel.
+                All countdowns use this computer&apos;s clock.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {syncState === 'live' ? (
+                <button
+                  type="button"
+                  className={cn(badgeVariants({ variant: 'default' }), 'cursor-pointer')}
+                  onClick={() => setPlayersOpen(true)}
+                  aria-haspopup="dialog"
+                  aria-expanded={playersOpen}
+                >
+                  {playerCount > 0 ? `Live · ${playerCount + 1} players` : 'Live board'}
+                </button>
+              ) : (
+                <Badge variant="outline">
+                  {syncState === 'connecting' && <Loader2 className="animate-spin" />}
+                  {syncState === 'local' && 'Local only'}
+                  {syncState === 'connecting' && 'Connecting'}
+                  {syncState === 'error' && 'Sync issue'}
+                </Badge>
+              )}
+              {syncError ? (
+                <p className="text-xs text-destructive">{syncError}</p>
+              ) : syncState === 'local' ? (
+                <p className="text-xs text-muted-foreground">
+                  Not live yet. Share a board link to sync timers with other players.
+                </p>
+              ) : playerCount > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Click Live to see who is connected. New tombstones show up immediately.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Kills from anyone on this party link show up immediately. Leave the tab open while you hunt.
+                </p>
+              )}
+            </div>
+
+            <div className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+              {SERVERS.map((server) => (
+                <Button
+                  key={server.id}
+                  size="sm"
+                  variant={serverId === server.id ? 'default' : 'outline'}
+                  onClick={() => onServerChange(server.id)}
+                >
+                  {server.name}
+                </Button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {FILTERS.map((item) => (
+                <Button
+                  key={item.id}
+                  size="xs"
+                  variant={filter === item.id ? 'secondary' : 'ghost'}
+                  onClick={() => onFilterChange(item.id)}
+                >
+                  {item.label}
+                  {item.id !== 'all' ? (
+                    <span className="tabular-nums text-muted-foreground">{counts[item.id] ?? 0}</span>
+                  ) : null}
+                </Button>
+              ))}
+            </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+          <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-start">
             <div className="rounded-xl border border-primary/20 bg-background/40 px-4 py-3">
               <p className="text-[11px] tracking-wide text-muted-foreground uppercase">
                 Local time · {timezoneLabel(now)}
@@ -178,73 +245,6 @@ export function Header({
                 {confirmClear ? 'Click again to confirm' : 'Clear all timers'}
               </Button>
             </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            {syncState === 'live' ? (
-              <button
-                type="button"
-                className={cn(badgeVariants({ variant: 'default' }), 'cursor-pointer')}
-                onClick={() => setPlayersOpen(true)}
-                aria-haspopup="dialog"
-                aria-expanded={playersOpen}
-              >
-                {playerCount > 0 ? `Live · ${playerCount + 1} players` : 'Live board'}
-              </button>
-            ) : (
-              <Badge variant="outline">
-                {syncState === 'connecting' && <Loader2 className="animate-spin" />}
-                {syncState === 'local' && 'Local only'}
-                {syncState === 'connecting' && 'Connecting'}
-                {syncState === 'error' && 'Sync issue'}
-              </Badge>
-            )}
-            {syncError ? (
-              <p className="text-xs text-destructive">{syncError}</p>
-            ) : syncState === 'local' ? (
-              <p className="text-xs text-muted-foreground">
-                Not live yet. Share a board link to sync timers with other players.
-              </p>
-            ) : playerCount > 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Click Live to see who is connected. New tombstones show up immediately.
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Kills from anyone on this party link show up immediately. Leave the tab open while you hunt.
-              </p>
-            )}
-          </div>
-
-          <div className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-            {SERVERS.map((server) => (
-              <Button
-                key={server.id}
-                size="sm"
-                variant={serverId === server.id ? 'default' : 'outline'}
-                onClick={() => onServerChange(server.id)}
-              >
-                {server.name}
-              </Button>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap gap-1.5">
-            {FILTERS.map((item) => (
-              <Button
-                key={item.id}
-                size="xs"
-                variant={filter === item.id ? 'secondary' : 'ghost'}
-                onClick={() => onFilterChange(item.id)}
-              >
-                {item.label}
-                {item.id !== 'all' ? (
-                  <span className="tabular-nums text-muted-foreground">{counts[item.id] ?? 0}</span>
-                ) : null}
-              </Button>
-            ))}
           </div>
         </div>
       </div>
