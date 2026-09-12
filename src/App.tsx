@@ -59,6 +59,24 @@ export default function App() {
       />
 
       <main className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-6">
+        <div>
+          <h2 className="font-heading text-sm font-medium">Server board</h2>
+          <p className="text-xs text-muted-foreground">
+            Dead for 60 minutes, then a 1-second to 30-minute spawn window.{' '}
+            <button
+              type="button"
+              className="text-xs text-foreground underline decoration-foreground/30 underline-offset-2 hover:decoration-foreground"
+              onClick={() => {
+                const next = !huntNowVisible
+                setHuntNowVisible(next)
+                saveHuntNowVisible(next)
+              }}
+            >
+              {huntNowVisible ? 'Hide Hunt now' : 'Show Hunt now'}
+            </button>
+          </p>
+        </div>
+
         {huntNowVisible ? (
           <HuntStrip
             board={boardState.board}
@@ -69,36 +87,17 @@ export default function App() {
           />
         ) : null}
 
-        <section className="space-y-3">
-          <div>
-            <h2 className="font-heading text-sm font-medium">Server board</h2>
-            <p className="text-xs text-muted-foreground">
-              Dead for 60 minutes, then a 1-second to 30-minute spawn window.{' '}
-              <button
-                type="button"
-                className="text-xs text-foreground underline decoration-foreground/30 underline-offset-2 hover:decoration-foreground"
-                onClick={() => {
-                  const next = !huntNowVisible
-                  setHuntNowVisible(next)
-                  saveHuntNowVisible(next)
-                }}
-              >
-                {huntNowVisible ? 'Hide Hunt now' : 'Show Hunt now'}
-              </button>
-            </p>
-          </div>
-          <BossGrid
-            board={boardState.board}
-            serverId={boardState.serverId}
-            now={nowMs}
-            filter={filter}
-            onSelect={setSelected}
-            onQuickKill={logKilledNow}
-            onToggleContested={(channel) =>
-              boardState.toggleContested(boardState.serverId, channel)
-            }
-          />
-        </section>
+        <BossGrid
+          board={boardState.board}
+          serverId={boardState.serverId}
+          now={nowMs}
+          filter={filter}
+          onSelect={setSelected}
+          onQuickKill={logKilledNow}
+          onToggleContested={(channel) =>
+            boardState.toggleContested(boardState.serverId, channel)
+          }
+        />
       </main>
 
       <LogKillDialog
