@@ -129,12 +129,12 @@ export function Header({
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="rounded-xl border border-primary/20 bg-background/40 px-4 py-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <div className="flex h-8 items-center gap-2 rounded-lg border border-primary/20 bg-background/40 px-3">
               <p className="text-[11px] tracking-wide text-muted-foreground uppercase">
                 Local time · {timezoneLabel(now)}
               </p>
-              <p className="font-heading text-xl font-medium tabular-nums">{formatClock(now)}</p>
+              <p className="font-heading text-sm font-medium tabular-nums">{formatClock(now)}</p>
             </div>
             <div className="flex flex-col gap-2">
               <Input
@@ -142,7 +142,7 @@ export function Header({
                 onChange={(event) => onPlayerNameChange(event.target.value)}
                 placeholder="Your player name"
                 aria-label="Player name"
-                className="w-full sm:w-48"
+                className="h-8 w-full sm:w-48"
               />
               <Button onClick={() => setShareOpen(true)}>
                 <Share2 data-icon="inline-start" />
