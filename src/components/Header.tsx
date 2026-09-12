@@ -129,55 +129,57 @@ export function Header({
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-            <div className="flex h-8 items-center gap-2 rounded-lg border border-primary/20 bg-background/40 px-3">
-              <p className="text-[11px] tracking-wide text-muted-foreground uppercase">
+          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[auto_12rem] sm:items-stretch sm:gap-x-3">
+            <div className="box-border flex h-8 min-h-8 items-center gap-2 rounded-lg border border-primary/20 bg-background/40 px-3">
+              <p className="text-[11px] leading-none tracking-wide text-muted-foreground uppercase">
                 Local time · {timezoneLabel(now)}
               </p>
-              <p className="font-heading text-sm font-medium tabular-nums">{formatClock(now)}</p>
+              <p className="font-heading text-sm leading-none font-medium tabular-nums">
+                {formatClock(now)}
+              </p>
             </div>
-            <div className="flex flex-col gap-2">
-              <Input
-                value={playerName}
-                onChange={(event) => onPlayerNameChange(event.target.value)}
-                placeholder="Your player name"
-                aria-label="Player name"
-                className="h-8 w-full sm:w-48"
-              />
-              <Button onClick={() => setShareOpen(true)}>
-                <Share2 data-icon="inline-start" />
-                Share board
-              </Button>
-              {partyUrl ? (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    onLeaveBoard()
-                    setShareOpen(false)
-                    toast.success('Left the shared board')
-                  }}
-                >
-                  <LogOut data-icon="inline-start" />
-                  Leave board
-                </Button>
-              ) : null}
+            <Input
+              value={playerName}
+              onChange={(event) => onPlayerNameChange(event.target.value)}
+              placeholder="Your player name"
+              aria-label="Player name"
+              className="box-border h-8 min-h-8 w-full"
+            />
+            <Button className="sm:col-start-2" onClick={() => setShareOpen(true)}>
+              <Share2 data-icon="inline-start" />
+              Share board
+            </Button>
+            {partyUrl ? (
               <Button
-                variant={confirmClear ? 'destructive' : 'outline'}
-                disabled={!hasReports && !confirmClear}
+                variant="outline"
+                className="sm:col-start-2"
                 onClick={() => {
-                  if (!confirmClear) {
-                    setConfirmClear(true)
-                    return
-                  }
-                  onClearAll()
-                  setConfirmClear(false)
-                  toast.success('All reported timers cleared')
+                  onLeaveBoard()
+                  setShareOpen(false)
+                  toast.success('Left the shared board')
                 }}
               >
-                <Trash2 data-icon="inline-start" />
-                {confirmClear ? 'Click again to confirm' : 'Clear all timers'}
+                <LogOut data-icon="inline-start" />
+                Leave board
               </Button>
-            </div>
+            ) : null}
+            <Button
+              variant={confirmClear ? 'destructive' : 'outline'}
+              className="sm:col-start-2"
+              disabled={!hasReports && !confirmClear}
+              onClick={() => {
+                if (!confirmClear) {
+                  setConfirmClear(true)
+                  return
+                }
+                onClearAll()
+                setConfirmClear(false)
+                toast.success('All reported timers cleared')
+              }}
+            >
+              <Trash2 data-icon="inline-start" />
+              {confirmClear ? 'Click again to confirm' : 'Clear all timers'}
+            </Button>
           </div>
         </div>
 
