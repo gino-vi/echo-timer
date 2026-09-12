@@ -205,7 +205,7 @@ export function Header({
               <p className="text-xs text-destructive">{syncError}</p>
             ) : syncState === 'local' ? (
               <p className="text-xs text-muted-foreground">
-                Not live yet. Share a party link so Asia and NA reports update instantly for everyone.
+                Not live yet. Share a board link to sync timers with other players.
               </p>
             ) : playerCount > 0 ? (
               <p className="text-xs text-muted-foreground">
