@@ -148,18 +148,19 @@ export function Header({
                 <Share2 data-icon="inline-start" />
                 Share board
               </Button>
-              <Button
-                variant="outline"
-                disabled={!partyUrl}
-                onClick={() => {
-                  onLeaveBoard()
-                  setShareOpen(false)
-                  toast.success('Left the shared board')
-                }}
-              >
-                <LogOut data-icon="inline-start" />
-                Leave board
-              </Button>
+              {partyUrl ? (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    onLeaveBoard()
+                    setShareOpen(false)
+                    toast.success('Left the shared board')
+                  }}
+                >
+                  <LogOut data-icon="inline-start" />
+                  Leave board
+                </Button>
+              ) : null}
               <Button
                 variant={confirmClear ? 'destructive' : 'outline'}
                 disabled={!hasReports && !confirmClear}
