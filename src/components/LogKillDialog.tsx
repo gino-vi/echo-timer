@@ -139,7 +139,9 @@ function KillForm({
             Use this time
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">Yesterday if later than now.</p>
+        <p className="text-xs text-muted-foreground">
+          If that clock time has not happened yet today, it is treated as yesterday.
+        </p>
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
       </div>
 
