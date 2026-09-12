@@ -23,7 +23,7 @@ function ContestedButton({ on, onToggle }: { on: boolean; onToggle: () => void }
       aria-pressed={on}
       onClick={onToggle}
       className={cn(
-        'rounded-md border px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase transition-colors',
+        'rounded-md border px-2 py-0.5 text-[10px] font-medium tracking-wide transition-colors',
         on
           ? 'border-red-500 bg-red-600 text-white'
           : 'border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
