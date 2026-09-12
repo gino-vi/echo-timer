@@ -17,7 +17,7 @@ import { formatClock, timezoneLabel } from '@/lib/format'
 import type { SyncState } from '@/hooks/useBoard'
 import { listConnectedHunters, type RemoteHunter } from '@/lib/hunters'
 import { cn } from '@/lib/utils'
-import { Link2, Loader2, Share2, Trash2, Upload } from 'lucide-react'
+import { Link2, Loader2, LogOut, Share2, Trash2, Upload } from 'lucide-react'
 
 const FILTERS: { id: HuntFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -44,6 +44,7 @@ type HeaderProps = {
   remoteHunters: RemoteHunter[]
   partyUrl: string | null
   onCreateBoard: () => Promise<string>
+  onLeaveBoard: () => void
   onImport: (text: string) => void
   onClearAll: () => void
   hasReports: boolean
@@ -65,6 +66,7 @@ export function Header({
   remoteHunters,
   partyUrl,
   onCreateBoard,
+  onLeaveBoard,
   onImport,
   onClearAll,
   hasReports,
@@ -145,6 +147,18 @@ export function Header({
               <Button onClick={() => setShareOpen(true)}>
                 <Share2 data-icon="inline-start" />
                 Share board
+              </Button>
+              <Button
+                variant="outline"
+                disabled={!partyUrl}
+                onClick={() => {
+                  onLeaveBoard()
+                  setShareOpen(false)
+                  toast.success('Left the shared board')
+                }}
+              >
+                <LogOut data-icon="inline-start" />
+                Leave board
               </Button>
               <Button
                 variant={confirmClear ? 'destructive' : 'outline'}

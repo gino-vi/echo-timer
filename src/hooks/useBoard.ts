@@ -334,6 +334,16 @@ export function useBoard() {
     [broadcast, enqueuePush],
   )
 
+  const leaveBoard = useCallback(() => {
+    if (!roomRef.current) return
+    setRoom(null)
+    setSyncState('local')
+    setSyncError(null)
+    setHunterCount(0)
+    hunterCountRef.current = 0
+    setRemoteHunters([])
+  }, [])
+
   const partyUrl = room
     ? `${window.location.origin}${window.location.pathname}?board=${encodeURIComponent(encodeRoom(room))}`
     : null
@@ -355,6 +365,7 @@ export function useBoard() {
     clearTimer,
     clearAllTimers: clearAllTimersOnBoard,
     createSharedBoard,
+    leaveBoard,
     importBoard,
     refreshRemote,
     hasReports: hasKillReports(board),

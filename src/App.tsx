@@ -49,6 +49,7 @@ export default function App() {
         remoteHunters={boardState.remoteHunters}
         partyUrl={boardState.partyUrl}
         onCreateBoard={boardState.createSharedBoard}
+        onLeaveBoard={boardState.leaveBoard}
         onImport={handleImport}
         onClearAll={boardState.clearAllTimers}
         hasReports={boardState.hasReports}
