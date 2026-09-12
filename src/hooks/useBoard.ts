@@ -2,19 +2,24 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   applyLivePayload,
   clearAllTimers,
+  contestedKey,
   decodeRoom,
   encodeRoom,
   hasKillReports,
   mergeBoards,
   randomNamespace,
+  setContested,
   setTimer,
   type BoardDoc,
+  type ContestedRecord,
   type LivePayload,
   type Room,
   type TimerRecord,
   type ReportKind,
 } from '@/lib/board'
-import type { TimerKey } from '@/lib/game'
+import { isServerId, type ChannelId, type ServerId, type TimerKey } from '@/lib/game'
+import { staleContestedUpdates, statusMapForBoard, type StatusMap } from '@/lib/contested'
+import { useNow } from '@/hooks/useNow'
 import {
   loadLocalBoard,
   loadLocalRoom,
@@ -27,8 +32,7 @@ import {
 } from '@/lib/localStore'
 import { connectLiveRoom, type LiveChannel } from '@/lib/liveSync'
 import { claimNamespace, fetchBoard, saveBoard } from '@/lib/remoteStore'
-import { isServerId, type ServerId } from '@/lib/game'
-import type { RemoteHunter } from '@/lib/hunters'
+import type { RemotePlayer } from '@/lib/players'
 
 export type SyncState = 'local' | 'connecting' | 'live' | 'error'
 
@@ -58,8 +62,8 @@ export function useBoard() {
     roomFromUrl() || loadLocalRoom() ? 'connecting' : 'local',
   )
   const [syncError, setSyncError] = useState<string | null>(null)
-  const [hunterCount, setHunterCount] = useState(0)
-  const [remoteHunters, setRemoteHunters] = useState<RemoteHunter[]>([])
+  const [playerCount, setPlayerCount] = useState(0)
+  const [remotePlayers, setRemotePlayers] = useState<RemotePlayer[]>([])
   const [playerName, setPlayerNameState] = useState(() => loadPlayerName())
   const [serverId, setServerIdState] = useState<ServerId>(() => {
     const saved = loadServerId()
@@ -69,9 +73,11 @@ export function useBoard() {
   const boardRef = useRef(board)
   const roomRef = useRef(room)
   const liveRef = useRef<LiveChannel | null>(null)
-  const hunterCountRef = useRef(0)
+  const playerCountRef = useRef(0)
   const playerNameRef = useRef(playerName)
   const writeChain = useRef(Promise.resolve())
+  const prevStatusesRef = useRef<StatusMap>({})
+  const nowMs = useNow(1000)
 
   useEffect(() => {
     playerNameRef.current = playerName
@@ -136,7 +142,10 @@ export function useBoard() {
         return
       }
       const merged = mergeBoards(boardRef.current, remote)
-      const changed = JSON.stringify(merged.timers) !== JSON.stringify(boardRef.current.timers)
+      const changed =
+        JSON.stringify(merged.timers) !== JSON.stringify(boardRef.current.timers) ||
+        JSON.stringify(merged.contested ?? {}) !==
+          JSON.stringify(boardRef.current.contested ?? {})
       if (changed) {
         boardRef.current = merged
         setBoard(merged)
@@ -151,9 +160,9 @@ export function useBoard() {
 
   useEffect(() => {
     if (!room) {
-      setHunterCount(0)
-      hunterCountRef.current = 0
-      setRemoteHunters([])
+      setPlayerCount(0)
+      playerCountRef.current = 0
+      setRemotePlayers([])
       liveRef.current = null
       return
     }
@@ -163,10 +172,10 @@ export function useBoard() {
       getName: () => playerNameRef.current,
       onMessage: applyIncoming,
       onPeers: (count) => {
-        hunterCountRef.current = count
-        setHunterCount(count)
+        playerCountRef.current = count
+        setPlayerCount(count)
       },
-      onHunters: setRemoteHunters,
+      onPlayers: setRemotePlayers,
     })
     liveRef.current = channel
     return () => {
@@ -186,7 +195,7 @@ export function useBoard() {
     let timer = 0
     const schedule = () => {
       window.clearTimeout(timer)
-      const delay = hunterCountRef.current > 0 ? SLOW_POLL_MS : FAST_POLL_MS
+      const delay = playerCountRef.current > 0 ? SLOW_POLL_MS : FAST_POLL_MS
       timer = window.setTimeout(tick, delay)
     }
     const tick = () => {
@@ -212,6 +221,39 @@ export function useBoard() {
     setServerIdState(id)
     saveServerId(id)
   }, [])
+
+  useEffect(() => {
+    const current = statusMapForBoard(boardRef.current, nowMs)
+    const updates = staleContestedUpdates(boardRef.current, nowMs, prevStatusesRef.current)
+    prevStatusesRef.current = current
+    if (updates.length === 0) return
+    let next = boardRef.current
+    for (const { key, record } of updates) {
+      next = setContested(next, key, record)
+      broadcast({ type: 'contested', key, record })
+    }
+    boardRef.current = next
+    setBoard(next)
+    enqueuePush(next)
+  }, [nowMs, board, broadcast, enqueuePush])
+
+  const toggleContested = useCallback(
+    (serverId: ServerId, channel: ChannelId, reporter = playerName) => {
+      const key = contestedKey(serverId, channel)
+      const existing = boardRef.current.contested?.[key]
+      const record: ContestedRecord = {
+        on: !existing?.on,
+        updatedAt: new Date().toISOString(),
+        reportedBy: reporter.trim() || 'Anonymous',
+      }
+      const next = setContested(boardRef.current, key, record)
+      boardRef.current = next
+      setBoard(next)
+      broadcast({ type: 'contested', key, record })
+      enqueuePush(next)
+    },
+    [broadcast, enqueuePush, playerName],
+  )
 
   const reportKill = useCallback(
     (key: TimerKey, killedAt: Date, reporter = playerName, kind: ReportKind = 'kill') => {
@@ -295,6 +337,16 @@ export function useBoard() {
     [broadcast, enqueuePush],
   )
 
+  const leaveBoard = useCallback(() => {
+    if (!roomRef.current) return
+    setRoom(null)
+    setSyncState('local')
+    setSyncError(null)
+    setPlayerCount(0)
+    playerCountRef.current = 0
+    setRemotePlayers([])
+  }, [])
+
   const partyUrl = room
     ? `${window.location.origin}${window.location.pathname}?board=${encodeURIComponent(encodeRoom(room))}`
     : null
@@ -304,17 +356,19 @@ export function useBoard() {
     room,
     syncState,
     syncError,
-    hunterCount,
-    remoteHunters,
+    playerCount,
+    remotePlayers,
     playerName,
     serverId,
     partyUrl,
     updatePlayerName,
     updateServerId,
     reportKill,
+    toggleContested,
     clearTimer,
     clearAllTimers: clearAllTimersOnBoard,
     createSharedBoard,
+    leaveBoard,
     importBoard,
     refreshRemote,
     hasReports: hasKillReports(board),

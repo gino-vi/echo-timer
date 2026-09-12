@@ -26,3 +26,14 @@ export function formatTimeInput(value: number | Date = new Date()): string {
   const date = value instanceof Date ? value : new Date(value)
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
+
+/** Last typed clock wins so the field survives Cancel / Killed just now / reopen. */
+export function preferredClockTime(
+  lastTyped: string,
+  existingAt: number | null,
+  now: number | Date = new Date(),
+): string {
+  if (lastTyped) return lastTyped
+  if (existingAt != null) return formatTimeInput(existingAt)
+  return formatTimeInput(now)
+}

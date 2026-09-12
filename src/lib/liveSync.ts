@@ -1,6 +1,6 @@
 import { joinRoom } from 'trystero'
 import type { BoardDoc, LivePayload } from '@/lib/board'
-import type { RemoteHunter } from '@/lib/hunters'
+import type { RemotePlayer } from '@/lib/players'
 
 const APP_ID = 'spiritvale-boss-board'
 
@@ -15,13 +15,13 @@ type LiveHandlers = {
   getName: () => string
   onMessage: (payload: LivePayload) => void
   onPeers: (count: number) => void
-  onHunters: (hunters: RemoteHunter[]) => void
+  onPlayers: (players: RemotePlayer[]) => void
 }
 
 function isLivePayload(value: unknown): value is LivePayload {
   if (!value || typeof value !== 'object') return false
   const payload = value as LivePayload
-  return payload.type === 'patch' || payload.type === 'snapshot'
+  return payload.type === 'patch' || payload.type === 'contested' || payload.type === 'snapshot'
 }
 
 export function connectLiveRoom(roomId: string, handlers: LiveHandlers): LiveChannel {
@@ -34,8 +34,8 @@ export function connectLiveRoom(roomId: string, handlers: LiveHandlers): LiveCha
 
   const names = new Map<string, string>()
   const emitPeers = () => handlers.onPeers(names.size)
-  const emitHunters = () => {
-    handlers.onHunters(
+  const emitPlayers = () => {
+    handlers.onPlayers(
       [...names.entries()].map(([id, name]) => ({ id, name })),
     )
   }
@@ -62,19 +62,19 @@ export function connectLiveRoom(roomId: string, handlers: LiveHandlers): LiveCha
     }
     nameAction.onMessage = (value, { peerId }) => {
       names.set(peerId, typeof value === 'string' ? value : '')
-      emitHunters()
+      emitPlayers()
     }
     room.onPeerJoin = (peerId) => {
       names.set(peerId, names.get(peerId) ?? '')
       emitPeers()
-      emitHunters()
+      emitPlayers()
       sendRtc?.({ type: 'snapshot', board: handlers.getBoard() }, peerId)
       sendName?.(localName, peerId)
     }
     room.onPeerLeave = (peerId) => {
       names.delete(peerId)
       emitPeers()
-      emitHunters()
+      emitPlayers()
     }
     leaveRtc = () => {
       void room.leave()
@@ -98,7 +98,7 @@ export function connectLiveRoom(roomId: string, handlers: LiveHandlers): LiveCha
       leaveRtc?.()
       names.clear()
       emitPeers()
-      emitHunters()
+      emitPlayers()
     },
   }
 }

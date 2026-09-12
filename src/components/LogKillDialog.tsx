@@ -1,27 +1,18 @@
-import { useState, type KeyboardEvent } from 'react'
+import { useEffect, useState, type KeyboardEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { BOSSES, SERVERS } from '@/lib/game'
 import type { SelectedCell } from '@/lib/view'
 import type { ReportKind } from '@/lib/board'
-import { formatTimeInput } from '@/lib/format'
-
-let lastClockInput = ''
-
-function initialClockTime(existingAt: number | null): string {
-  if (existingAt != null) return formatTimeInput(existingAt)
-  if (lastClockInput) return lastClockInput
-  return formatTimeInput()
-}
+import { preferredClockTime } from '@/lib/format'
+import { loadLastClockInput, saveLastClockInput } from '@/lib/localStore'
 
 type LogKillDialogProps = {
   open: boolean
@@ -30,6 +21,10 @@ type LogKillDialogProps = {
   onOpenChange: (open: boolean) => void
   onSave: (killedAt: Date, kind?: ReportKind) => void
   onClear: () => void
+}
+
+function rememberClock(value: string) {
+  saveLastClockInput(value)
 }
 
 function KillForm({
@@ -45,13 +40,27 @@ function KillForm({
   onSave: (killedAt: Date, kind?: ReportKind) => void
   onClear: () => void
 }) {
-  const [clockTime, setClockTime] = useState(() => initialClockTime(existingAt))
+  const [clockTime, setClockTime] = useState(() =>
+    preferredClockTime(loadLastClockInput(), existingAt),
+  )
   const [error, setError] = useState<string | null>(null)
 
   const boss = BOSSES.find((item) => item.id === target.bossId)
   const server = SERVERS.find((item) => item.id === target.serverId)
 
+  useEffect(() => {
+    return () => {
+      rememberClock(clockTime)
+    }
+  }, [clockTime])
+
+  function updateClock(value: string) {
+    rememberClock(value)
+    setClockTime(value)
+  }
+
   function saveDate(date: Date | null, kind: ReportKind = 'kill') {
+    rememberClock(clockTime)
     if (!date) {
       setError('Enter a valid kill time.')
       return
@@ -81,7 +90,7 @@ function KillForm({
     if (date.getTime() > Date.now() + 60_000) {
       date.setDate(date.getDate() - 1)
     }
-    lastClockInput = clockTime
+    rememberClock(clockTime)
     saveDate(date)
   }
 
@@ -93,69 +102,74 @@ function KillForm({
   }
 
   return (
-    <div onKeyDownCapture={onDialogKeyDown}>
-      <DialogHeader>
+    <div className="flex flex-col" onKeyDownCapture={onDialogKeyDown}>
+      <DialogHeader className="gap-1.5">
         <DialogTitle>Log tombstone time</DialogTitle>
         <DialogDescription>
-          {boss?.name} · {server?.full} · Channel {target.channel}. Enter the kill time shown on the
-          grave, or mark the boss as scouted alive.
+          {boss?.name} · {server?.full} · Channel {target.channel}
         </DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" onClick={() => saveDate(new Date())}>
-            Killed just now
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="border-lime-400/40 bg-lime-600 text-white hover:bg-lime-500"
-            onClick={() => saveDate(new Date(), 'scout')}
-          >
-            Scouted just now
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Button type="button" className="h-9" onClick={() => saveDate(new Date())}>
+          Killed just now
+        </Button>
+        <Button
+          type="button"
+          className="h-9 border-lime-400/40 bg-lime-600 text-white hover:bg-lime-500"
+          onClick={() => saveDate(new Date(), 'scout')}
+        >
+          Scouted just now
+        </Button>
+      </div>
+
+      <div className="mt-4 space-y-2">
+        <p className="text-xs font-medium">Tombstone clock</p>
+        <div className="grid grid-cols-[1fr_auto] items-stretch gap-2">
+          <Input
+            id="tombstone-clock"
+            type="time"
+            aria-label="Tombstone clock"
+            className="h-9"
+            value={clockTime}
+            onChange={(event) => updateClock(event.target.value)}
+            onInput={(event) => updateClock((event.target as HTMLInputElement).value)}
+          />
+          <Button type="button" variant="outline" className="h-9 px-3" onClick={applyClockTime}>
+            Use this time
           </Button>
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="tombstone-clock">Clock time on the tombstone</Label>
-          <div className="flex gap-2">
-            <Input
-              id="tombstone-clock"
-              type="time"
-              value={clockTime}
-              onChange={(event) => {
-                lastClockInput = event.target.value
-                setClockTime(event.target.value)
-              }}
-            />
-            <Button type="button" variant="outline" onClick={applyClockTime}>
-              Use this time
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            If that clock time has not happened yet today, it is treated as yesterday.
-          </p>
-        </div>
-
+        <p className="text-xs text-muted-foreground">
+          If that clock time has not happened yet today, it is treated as yesterday.
+        </p>
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
       </div>
 
-      <DialogFooter className="sm:justify-between">
+      <div className="-mx-4 -mb-4 mt-4 grid grid-cols-2 gap-2 rounded-b-xl border-t bg-muted/50 p-4">
         <Button
           type="button"
           variant="ghost"
+          className="h-9"
           onClick={() => {
+            rememberClock(clockTime)
             onClear()
             onOpenChange(false)
           }}
         >
           Clear report
         </Button>
-        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-9"
+          onClick={() => {
+            rememberClock(clockTime)
+            onOpenChange(false)
+          }}
+        >
           Cancel
         </Button>
-      </DialogFooter>
+      </div>
     </div>
   )
 }
@@ -169,12 +183,12 @@ export function LogKillDialog({
   onClear,
 }: LogKillDialogProps) {
   const formKey = target
-    ? `${target.bossId}:${target.serverId}:${target.channel}:${String(open)}:${existingAt ?? 'new'}`
+    ? `${target.bossId}:${target.serverId}:${target.channel}:${String(open)}`
     : 'none'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         {target ? (
           <KillForm
             key={formKey}
