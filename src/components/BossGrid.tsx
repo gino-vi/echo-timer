@@ -27,10 +27,10 @@ function ContestedButton({ on, onToggle }: { on: boolean; onToggle: () => void }
         onToggle()
       }}
       className={cn(
-        'inline-flex h-7 shrink-0 cursor-pointer items-center rounded-md border px-2.5 text-[11px] font-medium tracking-wide select-none transition-colors',
+        'inline-flex h-7 shrink-0 cursor-pointer items-center rounded-md border px-2.5 text-[11px] font-medium tracking-wide uppercase select-none transition-colors',
         on
           ? 'border-red-500 bg-red-600 text-white'
-          : 'border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
+          : 'border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
       )}
     >
       Contested
@@ -67,7 +67,7 @@ export function BossGrid({
     <>
       <div className="grid grid-cols-3 gap-2 md:hidden">
         {channelHeaders.map(({ channel, on }) => (
-          <div key={channel} className="flex flex-col items-center gap-1.5 rounded-lg border border-border/70 bg-card/40 px-2 py-2">
+          <div key={channel} className="flex items-center justify-between gap-1.5 rounded-lg border border-border/70 bg-card/40 px-2 py-2">
             <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
               Channel {channel}
             </span>
@@ -91,7 +91,7 @@ export function BossGrid({
                 Master
               </div>
               {channelHeaders.map(({ channel, on }) => (
-                <div key={channel} className="flex items-center gap-2 px-1 py-2">
+                <div key={channel} className="flex items-center justify-between gap-2 px-3 py-2">
                   <span className="text-xs tracking-wide text-muted-foreground uppercase">
                     Channel {channel}
                   </span>

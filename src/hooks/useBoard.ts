@@ -18,7 +18,7 @@ import {
   type ReportKind,
 } from '@/lib/board'
 import { isServerId, type ChannelId, type ServerId, type TimerKey } from '@/lib/game'
-import { staleContestedUpdates } from '@/lib/contested'
+import { staleContestedUpdates, statusMapForBoard, type StatusMap } from '@/lib/contested'
 import { useNow } from '@/hooks/useNow'
 import {
   loadLocalBoard,
@@ -76,6 +76,7 @@ export function useBoard() {
   const playerCountRef = useRef(0)
   const playerNameRef = useRef(playerName)
   const writeChain = useRef(Promise.resolve())
+  const prevStatusesRef = useRef<StatusMap>({})
   const nowMs = useNow(1000)
 
   useEffect(() => {
@@ -222,7 +223,9 @@ export function useBoard() {
   }, [])
 
   useEffect(() => {
-    const updates = staleContestedUpdates(boardRef.current, nowMs)
+    const current = statusMapForBoard(boardRef.current, nowMs)
+    const updates = staleContestedUpdates(boardRef.current, nowMs, prevStatusesRef.current)
+    prevStatusesRef.current = current
     if (updates.length === 0) return
     let next = boardRef.current
     for (const { key, record } of updates) {
@@ -232,7 +235,7 @@ export function useBoard() {
     boardRef.current = next
     setBoard(next)
     enqueuePush(next)
-  }, [nowMs, broadcast, enqueuePush])
+  }, [nowMs, board, broadcast, enqueuePush])
 
   const toggleContested = useCallback(
     (serverId: ServerId, channel: ChannelId, reporter = playerName) => {
