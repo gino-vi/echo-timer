@@ -5,6 +5,7 @@ const ROOM_KEY = 'svb:room'
 const NAME_KEY = 'svb:player-name'
 const SERVER_KEY = 'svb:server'
 const CLOCK_KEY = 'svb:last-clock'
+const HUNT_NOW_KEY = 'svb:hunt-now'
 
 export function loadLocalBoard(): BoardDoc {
   try {
@@ -74,5 +75,21 @@ export function saveLastClockInput(value: string) {
     localStorage.setItem(CLOCK_KEY, value)
   } catch {
     // Ignore quota / private-mode failures; in-memory fallback still works.
+  }
+}
+
+export function loadHuntNowVisible(): boolean {
+  try {
+    return localStorage.getItem(HUNT_NOW_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+
+export function saveHuntNowVisible(visible: boolean) {
+  try {
+    localStorage.setItem(HUNT_NOW_KEY, visible ? '1' : '0')
+  } catch {
+    // Ignore quota / private-mode failures.
   }
 }

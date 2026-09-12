@@ -9,6 +9,7 @@ import { useNow } from '@/hooks/useNow'
 import { timerKey } from '@/lib/game'
 import { countStatuses, type HuntFilter, type SelectedCell } from '@/lib/view'
 import { killedAtMs, type BoardDoc } from '@/lib/board'
+import { loadHuntNowVisible, saveHuntNowVisible } from '@/lib/localStore'
 
 export default function App() {
   const nowMs = useNow(1000)
@@ -16,6 +17,7 @@ export default function App() {
   const boardState = useBoard()
   const [filter, setFilter] = useState<HuntFilter>('all')
   const [selected, setSelected] = useState<SelectedCell | null>(null)
+  const [huntNowVisible, setHuntNowVisible] = useState(() => loadHuntNowVisible())
 
   const counts = countStatuses(boardState.board, nowMs, boardState.serverId)
 
@@ -57,20 +59,32 @@ export default function App() {
       />
 
       <main className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-6">
-        <HuntStrip
-          board={boardState.board}
-          now={nowMs}
-          serverId={boardState.serverId}
-          onSelect={setSelected}
-          onQuickKill={logKilledNow}
-        />
+        {huntNowVisible ? (
+          <HuntStrip
+            board={boardState.board}
+            now={nowMs}
+            serverId={boardState.serverId}
+            onSelect={setSelected}
+            onQuickKill={logKilledNow}
+          />
+        ) : null}
 
         <section className="space-y-3">
           <div>
             <h2 className="font-heading text-sm font-medium">Server board</h2>
             <p className="text-xs text-muted-foreground">
-              Dead for 60 minutes, then a 1-second to 30-minute spawn window. Click a channel to
-              log a tombstone time, or right-click to log killed now.
+              Dead for 60 minutes, then a 1-second to 30-minute spawn window.{' '}
+              <button
+                type="button"
+                className="text-xs text-foreground underline decoration-foreground/30 underline-offset-2 hover:decoration-foreground"
+                onClick={() => {
+                  const next = !huntNowVisible
+                  setHuntNowVisible(next)
+                  saveHuntNowVisible(next)
+                }}
+              >
+                {huntNowVisible ? 'Hide Hunt now' : 'Show Hunt now'}
+              </button>
             </p>
           </div>
           <BossGrid
