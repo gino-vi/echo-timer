@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { hunterLabel, listConnectedHunters } from '@/lib/hunters'
+import { playerLabel, listConnectedPlayers } from '@/lib/players'
 
-describe('hunterLabel', () => {
+describe('playerLabel', () => {
   it('keeps a typed name', () => {
-    expect(hunterLabel('Ada')).toEqual({ label: 'Ada', anonymous: false })
+    expect(playerLabel('Ada')).toEqual({ label: 'Ada', anonymous: false })
   })
 
   it('treats a blank name as Anonymous', () => {
-    expect(hunterLabel('   ')).toEqual({ label: 'Anonymous', anonymous: true })
+    expect(playerLabel('   ')).toEqual({ label: 'Anonymous', anonymous: true })
   })
 })
 
-describe('listConnectedHunters', () => {
+describe('listConnectedPlayers', () => {
   it('puts you first and unnamed peers last', () => {
-    const rows = listConnectedHunters('Ben', [
+    const rows = listConnectedPlayers('Ben', [
       { id: '2', name: '' },
       { id: '1', name: 'Ada' },
     ])

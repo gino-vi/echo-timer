@@ -45,8 +45,8 @@ export default function App() {
         counts={counts}
         syncState={boardState.syncState}
         syncError={boardState.syncError}
-        hunterCount={boardState.hunterCount}
-        remoteHunters={boardState.remoteHunters}
+        playerCount={boardState.playerCount}
+        remotePlayers={boardState.remotePlayers}
         partyUrl={boardState.partyUrl}
         onCreateBoard={boardState.createSharedBoard}
         onLeaveBoard={boardState.leaveBoard}

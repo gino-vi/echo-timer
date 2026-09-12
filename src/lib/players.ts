@@ -1,16 +1,16 @@
-export type RemoteHunter = {
+export type RemotePlayer = {
   id: string
   name: string
 }
 
-export type HunterRow = {
+export type PlayerRow = {
   id: string
   label: string
   anonymous: boolean
   isSelf: boolean
 }
 
-export function hunterLabel(name: string): { label: string; anonymous: boolean } {
+export function playerLabel(name: string): { label: string; anonymous: boolean } {
   const trimmed = name.trim()
   if (!trimmed) {
     return { label: 'Anonymous', anonymous: true }
@@ -18,10 +18,10 @@ export function hunterLabel(name: string): { label: string; anonymous: boolean }
   return { label: trimmed, anonymous: false }
 }
 
-export function listConnectedHunters(selfName: string, remotes: RemoteHunter[]): HunterRow[] {
-  const self = hunterLabel(selfName)
+export function listConnectedPlayers(selfName: string, remotes: RemotePlayer[]): PlayerRow[] {
+  const self = playerLabel(selfName)
   const others = remotes.map((remote) => {
-    const display = hunterLabel(remote.name)
+    const display = playerLabel(remote.name)
     return {
       id: remote.id,
       label: display.label,

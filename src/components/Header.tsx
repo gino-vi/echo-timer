@@ -15,7 +15,7 @@ import type { HuntFilter } from '@/lib/view'
 import { SERVERS, type ServerId } from '@/lib/game'
 import { formatClock, timezoneLabel } from '@/lib/format'
 import type { SyncState } from '@/hooks/useBoard'
-import { listConnectedHunters, type RemoteHunter } from '@/lib/hunters'
+import { listConnectedPlayers, type RemotePlayer } from '@/lib/players'
 import { cn } from '@/lib/utils'
 import { Link2, Loader2, LogOut, Share2, Trash2, Upload } from 'lucide-react'
 
@@ -40,8 +40,8 @@ type HeaderProps = {
   counts: Record<string, number>
   syncState: SyncState
   syncError: string | null
-  hunterCount: number
-  remoteHunters: RemoteHunter[]
+  playerCount: number
+  remotePlayers: RemotePlayer[]
   partyUrl: string | null
   onCreateBoard: () => Promise<string>
   onLeaveBoard: () => void
@@ -62,8 +62,8 @@ export function Header({
   counts,
   syncState,
   syncError,
-  hunterCount,
-  remoteHunters,
+  playerCount,
+  remotePlayers,
   partyUrl,
   onCreateBoard,
   onLeaveBoard,
@@ -73,7 +73,7 @@ export function Header({
   exportPayload,
 }: HeaderProps) {
   const [shareOpen, setShareOpen] = useState(false)
-  const [huntersOpen, setHuntersOpen] = useState(false)
+  const [playersOpen, setPlayersOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [importText, setImportText] = useState('')
   const [confirmClear, setConfirmClear] = useState(false)
@@ -84,7 +84,7 @@ export function Header({
     return () => window.clearTimeout(id)
   }, [confirmClear])
 
-  const hunters = listConnectedHunters(playerName, remoteHunters)
+  const players = listConnectedPlayers(playerName, remotePlayers)
 
   async function copyPartyLink() {
     try {
@@ -140,8 +140,8 @@ export function Header({
               <Input
                 value={playerName}
                 onChange={(event) => onPlayerNameChange(event.target.value)}
-                placeholder="Your hunter name"
-                aria-label="Hunter name"
+                placeholder="Your player name"
+                aria-label="Player name"
                 className="w-full sm:w-48"
               />
               <Button onClick={() => setShareOpen(true)}>
@@ -187,11 +187,11 @@ export function Header({
               <button
                 type="button"
                 className={cn(badgeVariants({ variant: 'default' }), 'cursor-pointer')}
-                onClick={() => setHuntersOpen(true)}
+                onClick={() => setPlayersOpen(true)}
                 aria-haspopup="dialog"
-                aria-expanded={huntersOpen}
+                aria-expanded={playersOpen}
               >
-                {hunterCount > 0 ? `Live · ${hunterCount + 1} hunters` : 'Live board'}
+                {playerCount > 0 ? `Live · ${playerCount + 1} players` : 'Live board'}
               </button>
             ) : (
               <Badge variant="outline">
@@ -207,7 +207,7 @@ export function Header({
               <p className="text-xs text-muted-foreground">
                 Not live yet. Share a party link so Asia and NA reports update instantly for everyone.
               </p>
-            ) : hunterCount > 0 ? (
+            ) : playerCount > 0 ? (
               <p className="text-xs text-muted-foreground">
                 Click Live to see who is connected. New tombstones show up immediately.
               </p>
@@ -249,28 +249,28 @@ export function Header({
         </div>
       </div>
 
-      <Dialog open={huntersOpen} onOpenChange={setHuntersOpen}>
+      <Dialog open={playersOpen} onOpenChange={setPlayersOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Hunters on this board</DialogTitle>
+            <DialogTitle>Players on this board</DialogTitle>
             <DialogDescription>
               Everyone currently connected to this party link.
             </DialogDescription>
           </DialogHeader>
           <ul className="max-h-72 space-y-1 overflow-y-auto">
-            {hunters.map((hunter) => (
+            {players.map((player) => (
               <li
-                key={hunter.id}
+                key={player.id}
                 className="flex items-baseline justify-between gap-3 rounded-lg px-2 py-1.5"
               >
-                {hunter.anonymous ? (
+                {player.anonymous ? (
                   <em className="text-sm italic [font-style:oblique_10deg] font-normal">
                     Anonymous
                   </em>
                 ) : (
-                  <span className="text-sm font-medium">{hunter.label}</span>
+                  <span className="text-sm font-medium">{player.label}</span>
                 )}
-                {hunter.isSelf ? (
+                {player.isSelf ? (
                   <span className="text-xs text-muted-foreground">you</span>
                 ) : null}
               </li>

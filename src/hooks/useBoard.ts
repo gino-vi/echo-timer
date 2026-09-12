@@ -32,7 +32,7 @@ import {
 } from '@/lib/localStore'
 import { connectLiveRoom, type LiveChannel } from '@/lib/liveSync'
 import { claimNamespace, fetchBoard, saveBoard } from '@/lib/remoteStore'
-import type { RemoteHunter } from '@/lib/hunters'
+import type { RemotePlayer } from '@/lib/players'
 
 export type SyncState = 'local' | 'connecting' | 'live' | 'error'
 
@@ -62,8 +62,8 @@ export function useBoard() {
     roomFromUrl() || loadLocalRoom() ? 'connecting' : 'local',
   )
   const [syncError, setSyncError] = useState<string | null>(null)
-  const [hunterCount, setHunterCount] = useState(0)
-  const [remoteHunters, setRemoteHunters] = useState<RemoteHunter[]>([])
+  const [playerCount, setPlayerCount] = useState(0)
+  const [remotePlayers, setRemotePlayers] = useState<RemotePlayer[]>([])
   const [playerName, setPlayerNameState] = useState(() => loadPlayerName())
   const [serverId, setServerIdState] = useState<ServerId>(() => {
     const saved = loadServerId()
@@ -73,7 +73,7 @@ export function useBoard() {
   const boardRef = useRef(board)
   const roomRef = useRef(room)
   const liveRef = useRef<LiveChannel | null>(null)
-  const hunterCountRef = useRef(0)
+  const playerCountRef = useRef(0)
   const playerNameRef = useRef(playerName)
   const writeChain = useRef(Promise.resolve())
   const nowMs = useNow(1000)
@@ -159,9 +159,9 @@ export function useBoard() {
 
   useEffect(() => {
     if (!room) {
-      setHunterCount(0)
-      hunterCountRef.current = 0
-      setRemoteHunters([])
+      setPlayerCount(0)
+      playerCountRef.current = 0
+      setRemotePlayers([])
       liveRef.current = null
       return
     }
@@ -171,10 +171,10 @@ export function useBoard() {
       getName: () => playerNameRef.current,
       onMessage: applyIncoming,
       onPeers: (count) => {
-        hunterCountRef.current = count
-        setHunterCount(count)
+        playerCountRef.current = count
+        setPlayerCount(count)
       },
-      onHunters: setRemoteHunters,
+      onPlayers: setRemotePlayers,
     })
     liveRef.current = channel
     return () => {
@@ -194,7 +194,7 @@ export function useBoard() {
     let timer = 0
     const schedule = () => {
       window.clearTimeout(timer)
-      const delay = hunterCountRef.current > 0 ? SLOW_POLL_MS : FAST_POLL_MS
+      const delay = playerCountRef.current > 0 ? SLOW_POLL_MS : FAST_POLL_MS
       timer = window.setTimeout(tick, delay)
     }
     const tick = () => {
@@ -339,9 +339,9 @@ export function useBoard() {
     setRoom(null)
     setSyncState('local')
     setSyncError(null)
-    setHunterCount(0)
-    hunterCountRef.current = 0
-    setRemoteHunters([])
+    setPlayerCount(0)
+    playerCountRef.current = 0
+    setRemotePlayers([])
   }, [])
 
   const partyUrl = room
@@ -353,8 +353,8 @@ export function useBoard() {
     room,
     syncState,
     syncError,
-    hunterCount,
-    remoteHunters,
+    playerCount,
+    remotePlayers,
     playerName,
     serverId,
     partyUrl,
