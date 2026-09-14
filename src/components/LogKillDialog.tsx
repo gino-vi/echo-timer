@@ -148,7 +148,7 @@ function KillForm({
       <div className="-mx-4 -mb-4 mt-4 grid grid-cols-2 gap-2 rounded-b-xl border-t bg-muted/50 p-4">
         <Button
           type="button"
-          variant="ghost"
+          variant="outline"
           className="h-9"
           onClick={() => {
             rememberClock(clockTime)
@@ -160,7 +160,7 @@ function KillForm({
         </Button>
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           className="h-9"
           onClick={() => {
             rememberClock(clockTime)

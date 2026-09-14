@@ -26,6 +26,16 @@ export default function App() {
     toast.success('Logged as killed now')
   }
 
+  function logScoutedNow(cell: SelectedCell) {
+    boardState.reportKill(
+      timerKey(cell.bossId, cell.serverId, cell.channel),
+      new Date(),
+      boardState.playerName,
+      'scout',
+    )
+    toast.success('Scouted as alive')
+  }
+
   function handleImport(text: string) {
     const parsed = JSON.parse(text) as BoardDoc
     if (parsed.version !== 1 || typeof parsed.timers !== 'object') {
@@ -84,6 +94,7 @@ export default function App() {
             serverId={boardState.serverId}
             onSelect={setSelected}
             onQuickKill={logKilledNow}
+            onQuickScout={logScoutedNow}
           />
         ) : null}
 
@@ -94,6 +105,7 @@ export default function App() {
           filter={filter}
           onSelect={setSelected}
           onQuickKill={logKilledNow}
+          onQuickScout={logScoutedNow}
           onToggleContested={(channel) =>
             boardState.toggleContested(boardState.serverId, channel)
           }

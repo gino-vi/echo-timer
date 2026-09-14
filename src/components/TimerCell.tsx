@@ -11,10 +11,19 @@ type TimerCellProps = {
   now: number
   onClick: () => void
   onQuickKill: () => void
+  onQuickScout: () => void
   compact?: boolean
 }
 
-export function TimerCell({ channel, record, now, onClick, onQuickKill, compact }: TimerCellProps) {
+export function TimerCell({
+  channel,
+  record,
+  now,
+  onClick,
+  onQuickKill,
+  onQuickScout,
+  compact,
+}: TimerCellProps) {
   const snap = spawnFromRecord(record, now)
   const scouted = reportKind(record) === 'scout'
   const headline =
@@ -45,6 +54,18 @@ export function TimerCell({ channel, record, now, onClick, onQuickKill, compact 
         event.preventDefault()
         onQuickKill()
       }}
+      onMouseDown={(event) => {
+        if (event.button === 1) event.preventDefault()
+      }}
+      onPointerDown={(event) => {
+        if (event.button === 1) event.preventDefault()
+      }}
+      onAuxClick={(event) => {
+        if (event.button !== 1) return
+        event.preventDefault()
+        event.stopPropagation()
+        onQuickScout()
+      }}
       className={cn(
         'flex w-full flex-col items-start rounded-xl border px-3 py-2.5 text-left transition-colors',
         STATUS_STYLES[snap.status],
@@ -63,7 +84,7 @@ export function TimerCell({ channel, record, now, onClick, onQuickKill, compact 
           {record?.reportedBy ? ` · ${record.reportedBy}` : ''}
         </span>
       ) : (
-        <span className="text-xs opacity-70">Click for a time, or right-click to log now</span>
+        <span className="text-xs opacity-70">Right-click to log now, middle-click to mark as alive</span>
       )}
     </button>
   )
