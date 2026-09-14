@@ -22,42 +22,42 @@ export function HistoryDialog({ bossId, serverId, board, onOpenChange }: History
 
   return (
     <Dialog open={bossId != null} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{boss?.name ?? 'Master'} history</DialogTitle>
           <DialogDescription>
             Last five log times on {server?.full ?? serverId} for each channel.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="space-y-4">
           {CHANNELS.map((channel) => {
             const record = bossId
               ? board.timers[timerKey(bossId, serverId, channel)]
               : undefined
             const entries = seedHistory(record)
             return (
-              <section key={channel} className="min-w-0">
+              <section key={channel}>
                 <h3 className="text-xs tracking-wide text-muted-foreground uppercase">
                   Channel {channel}
                 </h3>
                 {entries.length === 0 ? (
-                  <p className="mt-2 text-sm text-muted-foreground">No logs yet</p>
+                  <p className="mt-1.5 text-sm text-muted-foreground">No logs yet</p>
                 ) : (
-                  <ol className="mt-2 space-y-2">
+                  <ol className="mt-1.5 space-y-1.5">
                     {entries.map((entry) => {
                       const at = Date.parse(entry.killedAt)
                       return (
                         <li
                           key={`${entry.killedAt}|${entry.loggedAt}|${reportKind(entry)}`}
-                          className="text-sm"
+                          className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-sm"
                         >
-                          <p className="font-medium tabular-nums">
+                          <span className="font-medium tabular-nums">
                             {Number.isNaN(at) ? 'Unknown time' : formatLogStamp(at)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
+                          </span>
+                          <span className="text-xs text-muted-foreground">
                             {reportKind(entry) === 'scout' ? 'Scouted' : 'Died'}
                             {entry.reportedBy ? ` · ${entry.reportedBy}` : ''}
-                          </p>
+                          </span>
                         </li>
                       )
                     })}
