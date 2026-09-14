@@ -5,6 +5,7 @@ import {
   decodeRoom,
   encodeRoom,
   mergeBoards,
+  pushHistory,
   type BoardDoc,
 } from '@/lib/board'
 
@@ -47,6 +48,67 @@ describe('mergeBoards', () => {
     expect(merged.timers['berserker:na:1']?.reportedBy).toBe('Ben')
     expect(merged.timers['wizard:na:2']?.reportedBy).toBe('Ada')
     expect(merged.timers['priest:eu:3']?.killedAt).toBeNull()
+  })
+
+  it('keeps up to five log times when merging channel history', () => {
+    const local: BoardDoc = {
+      version: 1,
+      name: 'A',
+      timers: {
+        'berserker:na:1': {
+          killedAt: '2026-09-09T01:10:00.000Z',
+          updatedAt: '2026-09-09T01:10:00.000Z',
+          reportedBy: 'Ada',
+          history: [
+            {
+              killedAt: '2026-09-09T01:10:00.000Z',
+              loggedAt: '2026-09-09T01:10:00.000Z',
+              reportedBy: 'Ada',
+              kind: 'kill',
+            },
+            {
+              killedAt: '2026-09-09T00:40:00.000Z',
+              loggedAt: '2026-09-09T00:40:00.000Z',
+              reportedBy: 'Ada',
+              kind: 'kill',
+            },
+          ],
+        },
+      },
+    }
+    const remote: BoardDoc = {
+      version: 1,
+      name: 'B',
+      timers: {
+        'berserker:na:1': {
+          killedAt: '2026-09-09T01:20:00.000Z',
+          updatedAt: '2026-09-09T01:20:00.000Z',
+          reportedBy: 'Ben',
+          history: [
+            {
+              killedAt: '2026-09-09T01:20:00.000Z',
+              loggedAt: '2026-09-09T01:20:00.000Z',
+              reportedBy: 'Ben',
+              kind: 'scout',
+            },
+            {
+              killedAt: '2026-09-09T00:10:00.000Z',
+              loggedAt: '2026-09-09T00:10:00.000Z',
+              reportedBy: 'Ben',
+              kind: 'kill',
+            },
+          ],
+        },
+      },
+    }
+    const merged = mergeBoards(local, remote)
+    expect(merged.timers['berserker:na:1']?.reportedBy).toBe('Ben')
+    expect(merged.timers['berserker:na:1']?.history?.map((entry) => entry.killedAt)).toEqual([
+      '2026-09-09T01:20:00.000Z',
+      '2026-09-09T01:10:00.000Z',
+      '2026-09-09T00:40:00.000Z',
+      '2026-09-09T00:10:00.000Z',
+    ])
   })
 
   it('keeps the newest contested flag per channel', () => {
@@ -200,5 +262,29 @@ describe('encodeRoom', () => {
   it('rejects malformed tokens', () => {
     expect(decodeRoom('not-a-room')).toBeNull()
     expect(decodeRoom('svb-abc.nothex')).toBeNull()
+  })
+})
+
+describe('pushHistory', () => {
+  it('keeps only the five newest logs', () => {
+    let record = undefined
+    for (let hour = 1; hour <= 7; hour += 1) {
+      const stamp = `2026-09-09T${String(hour).padStart(2, '0')}:00:00.000Z`
+      record = {
+        killedAt: stamp,
+        updatedAt: stamp,
+        reportedBy: 'Ada',
+        kind: 'kill' as const,
+        history: pushHistory(record, {
+          killedAt: stamp,
+          loggedAt: stamp,
+          reportedBy: 'Ada',
+          kind: 'kill',
+        }),
+      }
+    }
+    expect(record?.history).toHaveLength(5)
+    expect(record?.history?.[0]?.killedAt).toBe('2026-09-09T07:00:00.000Z')
+    expect(record?.history?.[4]?.killedAt).toBe('2026-09-09T03:00:00.000Z')
   })
 })

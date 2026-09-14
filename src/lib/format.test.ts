@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { formatTimeInput, preferredClockTime } from '@/lib/format'
+import { formatLogStamp, formatTimeInput, preferredClockTime } from '@/lib/format'
+
+describe('formatLogStamp', () => {
+  it('includes weekday, date, and clock in one line', () => {
+    const at = new Date(2026, 8, 14, 15, 19).getTime()
+    const stamp = formatLogStamp(at)
+    expect(stamp).toMatch(/Sep/)
+    expect(stamp).toMatch(/14/)
+    expect(stamp).toMatch(/3:19|15:19/)
+  })
+})
 
 describe('formatTimeInput', () => {
   it('formats a local timestamp as HH:MM for a time input', () => {
