@@ -2,6 +2,14 @@ import type { TimerKey } from '@/lib/game'
 
 export const REPORT_KINDS = ['kill', 'scout'] as const
 export type ReportKind = (typeof REPORT_KINDS)[number]
+export const HISTORY_LIMIT = 5
+
+export type HistoryEntry = {
+  killedAt: string
+  loggedAt: string
+  reportedBy: string
+  kind?: ReportKind
+}
 
 export type TimerRecord = {
   killedAt: string | null
@@ -9,10 +17,73 @@ export type TimerRecord = {
   reportedBy: string
   /** Missing kind is treated as a kill for older board JSON. */
   kind?: ReportKind
+  history?: HistoryEntry[]
 }
 
-export function reportKind(record: TimerRecord | undefined): ReportKind {
+export function reportKind(record: TimerRecord | HistoryEntry | undefined): ReportKind {
   return record?.kind === 'scout' ? 'scout' : 'kill'
+}
+
+function historyKey(entry: HistoryEntry) {
+  return `${entry.killedAt}|${entry.loggedAt}|${reportKind(entry)}`
+}
+
+export function seedHistory(record: TimerRecord | undefined): HistoryEntry[] {
+  if (record?.history?.length) return record.history
+  if (!record?.killedAt) return []
+  return [
+    {
+      killedAt: record.killedAt,
+      loggedAt: record.updatedAt,
+      reportedBy: record.reportedBy,
+      kind: reportKind(record),
+    },
+  ]
+}
+
+export function mergeHistoryLists(
+  local: HistoryEntry[] | undefined,
+  remote: HistoryEntry[] | undefined,
+): HistoryEntry[] {
+  const map = new Map<string, HistoryEntry>()
+  for (const entry of [...(local ?? []), ...(remote ?? [])]) {
+    if (!entry?.killedAt || !entry.loggedAt) continue
+    const key = historyKey(entry)
+    if (!map.has(key)) map.set(key, entry)
+  }
+  return [...map.values()]
+    .sort((a, b) => b.loggedAt.localeCompare(a.loggedAt) || b.killedAt.localeCompare(a.killedAt))
+    .slice(0, HISTORY_LIMIT)
+}
+
+export function pushHistory(existing: TimerRecord | undefined, entry: HistoryEntry): HistoryEntry[] {
+  return mergeHistoryLists(seedHistory(existing), [entry])
+}
+
+export function mergeTimerRecords(
+  local: TimerRecord | undefined,
+  remote: TimerRecord | undefined,
+): TimerRecord | undefined {
+  if (!local) return remote
+  if (!remote) return local
+  const newer = local.updatedAt >= remote.updatedAt ? local : remote
+  return {
+    ...newer,
+    history: mergeHistoryLists(seedHistory(local), seedHistory(remote)),
+  }
+}
+
+export function mergeTimerMaps(
+  local: Record<string, TimerRecord> | undefined,
+  remote: Record<string, TimerRecord> | undefined,
+): Record<string, TimerRecord> {
+  const keys = new Set([...Object.keys(local ?? {}), ...Object.keys(remote ?? {})])
+  const next: Record<string, TimerRecord> = {}
+  for (const key of keys) {
+    const merged = mergeTimerRecords(local?.[key], remote?.[key])
+    if (merged) next[key] = merged
+  }
+  return next
 }
 
 export type ContestedRecord = {
@@ -60,7 +131,7 @@ export function mergeBoards(local: BoardDoc, remote: BoardDoc): BoardDoc {
   return {
     version: 1,
     name: local.name || remote.name,
-    timers: mergeMaps(local.timers, remote.timers),
+    timers: mergeTimerMaps(local.timers, remote.timers),
     contested: mergeMaps(local.contested, remote.contested),
   }
 }
@@ -118,6 +189,7 @@ export function clearAllTimers(board: BoardDoc, reportedBy: string): BoardDoc {
       updatedAt,
       reportedBy: reporter,
       kind: 'kill',
+      history: board.timers[key]?.history,
     }
   }
   return { ...board, timers }
@@ -168,14 +240,14 @@ export function applyLivePayload(board: BoardDoc, payload: LivePayload): BoardDo
     return setContested(board, payload.key, payload.record)
   }
   const existing = board.timers[payload.key]
-  if (existing && existing.updatedAt >= payload.record.updatedAt) {
+  const merged = mergeTimerRecords(existing, payload.record)
+  if (!merged) return board
+  if (
+    existing &&
+    existing.updatedAt === merged.updatedAt &&
+    JSON.stringify(existing.history ?? []) === JSON.stringify(merged.history ?? [])
+  ) {
     return board
   }
-  return {
-    ...board,
-    timers: {
-      ...board.timers,
-      [payload.key]: payload.record,
-    },
-  }
+  return setTimer(board, payload.key as TimerKey, merged)
 }

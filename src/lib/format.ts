@@ -21,6 +21,17 @@ export function formatTime(value: number): string {
   }).format(new Date(value))
 }
 
+/** Local weekday, date, and clock for a history log. */
+export function formatLogStamp(value: number): string {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(value))
+}
+
 /** `HH:MM` for `<input type="time">`, using the local clock. */
 export function formatTimeInput(value: number | Date = new Date()): string {
   const date = value instanceof Date ? value : new Date(value)

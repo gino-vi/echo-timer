@@ -7,11 +7,13 @@ import {
   encodeRoom,
   hasKillReports,
   mergeBoards,
+  pushHistory,
   randomNamespace,
   setContested,
   setTimer,
   type BoardDoc,
   type ContestedRecord,
+  type HistoryEntry,
   type LivePayload,
   type Room,
   type TimerRecord,
@@ -257,11 +259,22 @@ export function useBoard() {
 
   const reportKill = useCallback(
     (key: TimerKey, killedAt: Date, reporter = playerName, kind: ReportKind = 'kill') => {
-      const record: TimerRecord = {
+      const existing = boardRef.current.timers[key]
+      const loggedAt = new Date().toISOString()
+      const reportedBy = reporter.trim() || 'Anonymous'
+      const reportKindValue: ReportKind = kind === 'scout' ? 'scout' : 'kill'
+      const entry: HistoryEntry = {
         killedAt: killedAt.toISOString(),
-        updatedAt: new Date().toISOString(),
-        reportedBy: reporter.trim() || 'Anonymous',
-        kind: kind === 'scout' ? 'scout' : 'kill',
+        loggedAt,
+        reportedBy,
+        kind: reportKindValue,
+      }
+      const record: TimerRecord = {
+        killedAt: entry.killedAt,
+        updatedAt: loggedAt,
+        reportedBy,
+        kind: reportKindValue,
+        history: pushHistory(existing, entry),
       }
       const next = setTimer(boardRef.current, key, record)
       boardRef.current = next
@@ -274,11 +287,13 @@ export function useBoard() {
 
   const clearTimer = useCallback(
     (key: TimerKey, reporter = playerName) => {
+      const existing = boardRef.current.timers[key]
       const record: TimerRecord = {
         killedAt: null,
         updatedAt: new Date().toISOString(),
         reportedBy: reporter.trim() || 'Anonymous',
         kind: 'kill',
+        history: existing?.history,
       }
       const next = setTimer(boardRef.current, key, record)
       boardRef.current = next

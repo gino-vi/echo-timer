@@ -1,7 +1,9 @@
-import { BOSSES, CHANNELS, timerKey, type ChannelId, type ServerId } from '@/lib/game'
+import { useState } from 'react'
+import { BOSSES, CHANNELS, timerKey, type BossId, type ChannelId, type ServerId } from '@/lib/game'
 import { spawnFromRecord } from '@/lib/timers'
 import { getContested, type BoardDoc } from '@/lib/board'
 import { TimerCell } from '@/components/TimerCell'
+import { HistoryDialog } from '@/components/HistoryDialog'
 import type { HuntFilter, SelectedCell } from '@/lib/view'
 import { matchesFilter } from '@/lib/view'
 import { cn } from '@/lib/utils'
@@ -47,6 +49,7 @@ export function BossGrid({
   onQuickKill,
   onToggleContested,
 }: BossGridProps) {
+  const [historyBossId, setHistoryBossId] = useState<BossId | null>(null)
   const rows = BOSSES.map((boss) => {
     const cells = CHANNELS.map((channel) => {
       const key = timerKey(boss.id, serverId, channel)
@@ -103,6 +106,13 @@ export function BossGrid({
                   <div className="flex flex-col justify-center rounded-xl border border-border/70 bg-card/50 px-3 py-3">
                     <p className="font-heading text-sm font-medium">{boss.short}</p>
                     <p className="text-xs text-muted-foreground">{boss.name}</p>
+                    <button
+                      type="button"
+                      className="mt-2 w-fit text-xs text-muted-foreground italic hover:text-foreground"
+                      onClick={() => setHistoryBossId(boss.id)}
+                    >
+                      History
+                    </button>
                   </div>
                   {cells.map((cell) => (
                     <TimerCell
@@ -126,7 +136,16 @@ export function BossGrid({
           <div className="grid gap-3 md:hidden">
             {rows.map(({ boss, cells }) => (
               <article key={boss.id} className="rounded-xl border border-border/80 bg-card/50 p-3">
-                <h3 className="font-heading text-sm font-medium">{boss.name}</h3>
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="font-heading text-sm font-medium">{boss.name}</h3>
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground italic hover:text-foreground"
+                    onClick={() => setHistoryBossId(boss.id)}
+                  >
+                    History
+                  </button>
+                </div>
                 <div className="mt-2 grid gap-2">
                   {cells.map((cell) => (
                     <TimerCell
@@ -149,6 +168,14 @@ export function BossGrid({
           </div>
         </>
       )}
+      <HistoryDialog
+        bossId={historyBossId}
+        serverId={serverId}
+        board={board}
+        onOpenChange={(open) => {
+          if (!open) setHistoryBossId(null)
+        }}
+      />
     </>
   )
 }
