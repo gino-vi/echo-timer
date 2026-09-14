@@ -65,7 +65,7 @@ export default function App() {
             Dead for 60 minutes, then a 1-second to 30-minute spawn window.{' '}
             <button
               type="button"
-              className="text-xs text-foreground underline decoration-foreground/30 underline-offset-2 hover:decoration-foreground"
+              className="text-xs text-foreground italic hover:text-foreground/80"
               onClick={() => {
                 const next = !huntNowVisible
                 setHuntNowVisible(next)
