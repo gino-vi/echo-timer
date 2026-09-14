@@ -15,6 +15,7 @@ type BossGridProps = {
   filter: HuntFilter
   onSelect: (cell: SelectedCell) => void
   onQuickKill: (cell: SelectedCell) => void
+  onQuickScout: (cell: SelectedCell) => void
   onToggleContested: (channel: ChannelId) => void
 }
 
@@ -47,6 +48,7 @@ export function BossGrid({
   filter,
   onSelect,
   onQuickKill,
+  onQuickScout,
   onToggleContested,
 }: BossGridProps) {
   const [historyBossId, setHistoryBossId] = useState<BossId | null>(null)
@@ -126,6 +128,9 @@ export function BossGrid({
                       onQuickKill={() =>
                         onQuickKill({ bossId: boss.id, serverId, channel: cell.channel })
                       }
+                      onQuickScout={() =>
+                        onQuickScout({ bossId: boss.id, serverId, channel: cell.channel })
+                      }
                     />
                   ))}
                 </div>
@@ -159,6 +164,9 @@ export function BossGrid({
                       }
                       onQuickKill={() =>
                         onQuickKill({ bossId: boss.id, serverId, channel: cell.channel })
+                      }
+                      onQuickScout={() =>
+                        onQuickScout({ bossId: boss.id, serverId, channel: cell.channel })
                       }
                     />
                   ))}

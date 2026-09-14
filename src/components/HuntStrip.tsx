@@ -14,6 +14,7 @@ type HuntStripProps = {
   serverId: ServerId
   onSelect: (cell: SelectedCell) => void
   onQuickKill: (cell: SelectedCell) => void
+  onQuickScout: (cell: SelectedCell) => void
 }
 
 const PRIORITY_LABEL: Record<HuntPriority, string> = {
@@ -23,7 +24,7 @@ const PRIORITY_LABEL: Record<HuntPriority, string> = {
   soon: 'Soon',
 }
 
-export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntStripProps) {
+export function HuntStrip({ board, now, serverId, onSelect, onQuickKill, onQuickScout }: HuntStripProps) {
   const actionable = listHuntNow(board, now, serverId)
   const currentServer = SERVERS.find((server) => server.id === serverId)?.full ?? serverId
 
@@ -66,6 +67,22 @@ export function HuntStrip({ board, now, serverId, onSelect, onQuickKill }: HuntS
                 onContextMenu={(event) => {
                   event.preventDefault()
                   onQuickKill({
+                    bossId: row.bossId,
+                    serverId: row.serverId,
+                    channel: row.channel,
+                  })
+                }}
+                onMouseDown={(event) => {
+                  if (event.button === 1) event.preventDefault()
+                }}
+                onPointerDown={(event) => {
+                  if (event.button === 1) event.preventDefault()
+                }}
+                onAuxClick={(event) => {
+                  if (event.button !== 1) return
+                  event.preventDefault()
+                  event.stopPropagation()
+                  onQuickScout({
                     bossId: row.bossId,
                     serverId: row.serverId,
                     channel: row.channel,
