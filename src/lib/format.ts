@@ -21,12 +21,14 @@ export function formatTime(value: number): string {
   }).format(new Date(value))
 }
 
-/** Local weekday and date for a history log. */
-export function formatLogDate(value: number): string {
+/** Local weekday, date, and clock for a history log. */
+export function formatLogStamp(value: number): string {
   return new Intl.DateTimeFormat(undefined, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
   }).format(new Date(value))
 }
 
